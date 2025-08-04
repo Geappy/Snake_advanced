@@ -1,0 +1,11 @@
+"""the structure of NPC characters"""
+
+import pygame
+
+from assistent_skripts.color_print import custom_print as cprint
+from assistent_skripts.color_print import ValidColors as VC
+
+
+class Player():
+    def __init__(self, screen) -> None:
+        self.screen: pygame.display = screen

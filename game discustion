@@ -1,0 +1,37 @@
+- timed levels
+
+- player character
+    - snake with prcidual animation
+    - add wepons onte every x bodeyparts
+
+- items
+    - wepons of passive modifiers to be added to the snake
+    - swort (big damage low range)
+    - guns (less damage but infinit range)
+    - boost items (healing, speed, armor)
+    - magic (big damage big range low atack speed)
+
+- map
+    - pre made rooms, randomly put together
+
+- enemies
+    - vampiers
+    - snakes
+    - aliens
+    - steve
+
+- abilities/skills
+
+- upgrades
+    - permanent upgrades
+
+- HUD
+    - HP
+    - armor
+    - mana
+    - items
+    - map
+
+- hub
+    - town with NPC's
+    - NPS's provide upgrades to player and town
