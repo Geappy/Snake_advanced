@@ -57,9 +57,17 @@ class MainGameOBJ():
     def render(self) -> None:
         """render all the importaint stuff"""
         self.screen.fill((0, 0, 0))
-        self.player.render()
+        self.player.update_body_positions()
+
+        player_x, player_y = self.player.snake_pos[0]
+        width, height = self.screen.get_size()
+        center_x = width // 2
+        center_y = height // 2
+        offset = (center_x - player_x, center_y - player_y)
+
+        self.player.render(offset)
         for obj in self.npc_characters.values():
-            obj.render()
+            obj.render(offset)
         pygame.display.flip()
 
     def kill_game(self) -> None:

@@ -57,24 +57,21 @@ class Player():
 
         # if we are close to the target, snap to the target
         if hypotenuse < self.move_speed:
-            for i, point in enumerate(self.snake_pos[1:]):
-                x, y = point
-                self.snake_pos[i] = (x + delta_x, y + delta_y)
+            self.snake_pos[0] = self.target_pos
 
         # calsculate the new animated pos
         else:
             angle_rad = math.atan2(delta_y, delta_x)
-            change_x = self.move_speed * math.cos(angle_rad)
-            change_y = self.move_speed * math.sin(angle_rad)
+            new_x = self.snake_pos[0][0] + self.move_speed * math.cos(angle_rad)
+            new_y = self.snake_pos[0][1] + self.move_speed * math.sin(angle_rad)
 
-            for i, point in enumerate(self.snake_pos[1:]):
-                x, y = point
-                self.snake_pos[i] = (x + change_x, y + change_y)
+            self.snake_pos[0] = (new_x, new_y)
 
     def update_body_positions(self) -> None:
         """
         Calculate the correcs positions of all the body parts
         """
+        self.calc_move_pos()
         for i, bodypart in enumerate(self.snake_pos):
             if i == 0:
                 continue
@@ -150,8 +147,12 @@ class Player():
         for i, body_coords in enumerate(reversed(self.snake_pos)):
             pygame.draw.circle(self.screen, (255, 0, 0), body_coords, self.girthness/3)
 
-    def render(self) -> None:
+    def render(self, offset: tuple) -> None:
         """renders and updates the plaxer character"""
-        self.calc_move_pos()
-        self.update_body_positions()
+        self.target_pos = (self.target_pos[0] + offset[0], self.target_pos[1] + offset[1])
+        self.snake_pos = [
+            (pos[0] + offset[0], pos[1] + offset[1])
+            for pos in self.snake_pos
+        ]
+
         self.draw()
