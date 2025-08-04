@@ -21,7 +21,7 @@ class Player():
         self.acceleration: int = 1
         self.deceleration: int = 1
 
-        self.girthness: int = 50
+        self.girthness: int = 60
         self.segment_length: float = self.girthness * 0.8
 
         self.move_speed: int = 15
