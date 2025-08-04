@@ -26,8 +26,6 @@ class MainGameOBJ():
         self.npc_characters[NPCRegister.WIZARD] = NPCCharacter(self.screen, NPCRegister.WIZARD)
         self.npc_characters[NPCRegister.WIZARD].active = True
 
-        self.npc_characters[NPCRegister.WIZARD].set_target_pos((1200, 750))
-
         cprint("character setup sucsessful ", VC.MAGENTA)
 
     def handle_input(self):
@@ -35,10 +33,25 @@ class MainGameOBJ():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.kill_game()
+
             elif event.type == pygame.KEYDOWN:
                 event_key = pygame.key.name(event.key)
                 if event_key == "s":
                     cprint("s", VC.YELLOW)
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1: # left click
+                    self.npc_characters[NPCRegister.WIZARD].set_target_pos(pygame.mouse.get_pos())
+
+                elif event.button == 3: # right click
+                    pass
+
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1: # left click
+                    pass
+
+                elif event.button == 3: # right click
+                    pass
 
     def render(self) -> None:
         """render all the importaint stuff"""

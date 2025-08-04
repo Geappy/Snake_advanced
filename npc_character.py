@@ -54,6 +54,8 @@ class NPCCharacter():
         )
     
     def change_animation(self, new_state: str) -> None:
+        if self.animation_state == new_state:
+            return
         self.animation_state = new_state
         self.animation_sice = self.count_images_in_folder()
         self.frame = 0
@@ -95,11 +97,15 @@ class NPCCharacter():
 
         image_path: str = f"textures/npcs/{self.character}/{self.animation_state}/{self.frame}.png"
         image = pygame.image.load(image_path).convert_alpha()
+
+        # deal with sice and right positioning
         original_width, original_height = image.get_size()
         scale_factor = self.sice / original_height
         new_width = int(original_width * scale_factor)
+        centered_pos = (self.pos[0] - new_width * 0.5, self.pos[1] - self.sice * 0.8)
+
         scaled_image = pygame.transform.scale(image, (new_width, self.sice))
-        self.screen.blit(scaled_image, self.pos)
+        self.screen.blit(scaled_image, centered_pos)
 
         self.frame_timer += 1
         if self.frame_timer >= self.frame_delay:
