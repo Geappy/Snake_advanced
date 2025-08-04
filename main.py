@@ -41,10 +41,11 @@ class MainGameOBJ():
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: # left click
-                    self.npc_characters[NPCRegister.WIZARD].set_target_pos(pygame.mouse.get_pos())
+                    # self.npc_characters[NPCRegister.WIZARD].set_target_pos(pygame.mouse.get_pos())
+                    self.player.set_target_pos(pygame.mouse.get_pos())
 
                 elif event.button == 3: # right click
-                    pass
+                    self.player.add_snake_part()
 
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1: # left click
@@ -56,6 +57,7 @@ class MainGameOBJ():
     def render(self) -> None:
         """render all the importaint stuff"""
         self.screen.fill((0, 0, 0))
+        self.player.render()
         for obj in self.npc_characters.values():
             obj.render()
         pygame.display.flip()
