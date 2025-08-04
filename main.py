@@ -23,8 +23,10 @@ class MainGameOBJ():
         self.player = Player(self.screen)
         self.npc_characters: dict[str, NPCCharacter] = {}
 
-        self.npc_characters[NPCRegister.WORKER] = NPCCharacter(self.screen, NPCRegister.WORKER)
-        self.npc_characters[NPCRegister.WORKER].active = True
+        self.npc_characters[NPCRegister.WIZARD] = NPCCharacter(self.screen, NPCRegister.WIZARD)
+        self.npc_characters[NPCRegister.WIZARD].active = True
+
+        self.npc_characters[NPCRegister.WIZARD].set_target_pos((1200, 750))
 
         cprint("character setup sucsessful ", VC.MAGENTA)
 
@@ -32,8 +34,7 @@ class MainGameOBJ():
         """loocks for player input and handles it"""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                self.kill_game()
             elif event.type == pygame.KEYDOWN:
                 event_key = pygame.key.name(event.key)
                 if event_key == "s":

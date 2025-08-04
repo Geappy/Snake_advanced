@@ -1,6 +1,7 @@
 """the structure of NPC characters"""
 
 import os
+import math
 import pygame
 
 from assistent_skripts.color_print import custom_print as cprint
@@ -9,14 +10,10 @@ from assistent_skripts.color_print import ValidColors as VC
 
 class NPCRegister():
     # friendly NPC's
-    WORKER = "worker"
-    MERCHANT = "merchant"
-    GUARD = "guard"
+    WIZARD = "wizard"
 
     VILLAGE_NPCS = [
-        WORKER,
-        MERCHANT,
-        GUARD
+        WIZARD,
     ]
 
     # hostile NPC's
@@ -37,11 +34,16 @@ class NPCCharacter():
         self.screen: pygame.display = screen
         self.active: bool = False
         self.pos: tuple = spawn
+        self.target_pos: tuple = self.pos
+        self.move_speed: int = 8
+        self.sice: int = 200
 
         # animation var
         self.animation_state: str = NPCRegister.IDLE
         self.character: str = character
         self.frame: int = 0
+        self.frame_timer: int = 0
+        self.frame_delay: int = 10
         self.animation_sice = self.count_images_in_folder()
 
     def count_images_in_folder(self, extensions={".png", ".jpg", ".jpeg"}) -> int:
@@ -54,13 +56,55 @@ class NPCCharacter():
     def change_animation(self, new_state: str) -> None:
         self.animation_state = new_state
         self.animation_sice = self.count_images_in_folder()
+        self.frame = 0
+        self.frame_timer = 0
+
+    def set_target_pos(self, new_pos) -> None:
+        self.target_pos = new_pos
+        self.change_animation(NPCRegister.RUNNING)
+        self.frame_delay = 3
+
+    def calc_move_pos(self) -> None:
+        """to set new position for fluid movement"""
+        # get the lengths of the right triangle
+        delta_x = self.target_pos[0] - self.pos[0]
+        delta_y = self.target_pos[1] - self.pos[1]
+
+        hypotenuse = math.sqrt(delta_x ** 2 + delta_y ** 2)
+
+        # if we are close to the target, snap to the target
+        if hypotenuse < self.move_speed:
+            self.pos = self.target_pos
+            self.change_animation(NPCRegister.IDLE)
+            self.frame_delay = self.move_speed * 2
+
+        # calsculate the new animated pos
+        else:
+            angle_rad = math.atan2(delta_y, delta_x)
+            new_x = self.pos[0] + self.move_speed * math.cos(angle_rad)
+            new_y = self.pos[1] + self.move_speed * math.sin(angle_rad)
+
+            self.pos = (new_x, new_y)
 
     def render(self) -> None:
         if not self.active:
+            self.pos = self.target_pos
             return
+        if self.target_pos != self.pos:
+            self.calc_move_pos()
+
         image_path: str = f"textures/npcs/{self.character}/{self.animation_state}/{self.frame}.png"
         image = pygame.image.load(image_path).convert_alpha()
-        self.screen.blit(image, self.pos)
-        self.frame += 1
-        if self.frame >= self.animation_sice:
-            self.frame = 0
+        original_width, original_height = image.get_size()
+        scale_factor = self.sice / original_height
+        new_width = int(original_width * scale_factor)
+        scaled_image = pygame.transform.scale(image, (new_width, self.sice))
+        self.screen.blit(scaled_image, self.pos)
+
+        self.frame_timer += 1
+        if self.frame_timer >= self.frame_delay:
+            self.frame += 1
+            self.frame_timer = 0
+            if self.frame >= self.animation_sice:
+                self.frame = 0
+
