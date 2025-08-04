@@ -19,6 +19,8 @@ class MainGameOBJ():
         self.screen = pygame.display.set_mode()
         cprint("game setup sucsessful", VC.MAGENTA)
 
+        self.move: bool = False
+
         # setup all the characters
         self.player = Player(self.screen)
         self.npc_characters: dict[str, NPCCharacter] = {}
@@ -41,23 +43,38 @@ class MainGameOBJ():
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: # left click
-                    self.npc_characters[NPCRegister.WIZARD].set_target_pos(pygame.mouse.get_pos())
+                    self.move = True
 
                 elif event.button == 3: # right click
-                    pass
+                    self.player.add_snake_part()
 
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1: # left click
-                    pass
+                    self.move = False
+                    # set target to zero
+                    self.player.target_pos = self.player.snake_pos[0]
 
                 elif event.button == 3: # right click
                     pass
 
     def render(self) -> None:
         """render all the importaint stuff"""
+        if self.move:
+            # self.npc_characters[NPCRegister.WIZARD].set_target_pos(pygame.mouse.get_pos())
+            self.player.set_target_pos(pygame.mouse.get_pos())
+
         self.screen.fill((0, 0, 0))
+        self.player.update_body_positions()
+
+        player_x, player_y = self.player.snake_pos[0]
+        width, height = self.screen.get_size()
+        center_x = width // 2
+        center_y = height // 2
+        offset = (center_x - player_x, center_y - player_y)
+
+        self.player.render(offset)
         for obj in self.npc_characters.values():
-            obj.render()
+            obj.render(offset)
         pygame.display.flip()
 
     def kill_game(self) -> None:

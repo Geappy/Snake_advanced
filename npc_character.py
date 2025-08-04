@@ -88,7 +88,9 @@ class NPCCharacter():
 
             self.pos = (new_x, new_y)
 
-    def render(self) -> None:
+    def render(self, offset: tuple) -> None:
+        self.target_pos = (self.target_pos[0] + offset[0], self.target_pos[1] + offset[1])
+        self.pos = (self.pos[0] + offset[0], self.pos[1] + offset[1])
         if not self.active:
             self.pos = self.target_pos
             return
