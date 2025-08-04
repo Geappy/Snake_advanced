@@ -21,12 +21,15 @@ class MainGameOBJ():
 
         # setup all the characters
         self.player = Player(self.screen)
-        self.npc_characters: dict[NPCCharacter] = {}
-        for npc in NPCRegister.VILLAGE_NPCS:
-            self.npc_characters[npc] = NPCCharacter(self.screen, npc)
+        self.npc_characters: dict[str, NPCCharacter] = {}
+
+        self.npc_characters[NPCRegister.WORKER] = NPCCharacter(self.screen, NPCRegister.WORKER)
+        self.npc_characters[NPCRegister.WORKER].active = True
+
         cprint("character setup sucsessful ", VC.MAGENTA)
 
-    def check_input(self):
+    def handle_input(self):
+        """loocks for player input and handles it"""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -36,6 +39,13 @@ class MainGameOBJ():
                 if event_key == "s":
                     cprint("s", VC.YELLOW)
 
+    def render(self) -> None:
+        """render all the importaint stuff"""
+        self.screen.fill((0, 0, 0))
+        for obj in self.npc_characters.values():
+            obj.render()
+        pygame.display.flip()
+
     def kill_game(self) -> None:
         """ends the game"""
         pygame.quit()
@@ -44,9 +54,12 @@ class MainGameOBJ():
 
 def main() -> None:
     game = MainGameOBJ()
+    clock = pygame.time.Clock()
 
     while True:
-        game.check_input()
+        game.handle_input()
+        game.render()
+        clock.tick(60)
 
 if __name__ == "__main__":
     main()
