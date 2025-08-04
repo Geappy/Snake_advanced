@@ -21,20 +21,44 @@ class MainGameOBJ():
 
         # setup all the characters
         self.player = Player(self.screen)
-        self.npc_characters: dict[NPCCharacter] = {}
-        for npc in NPCRegister.VILLAGE_NPCS:
-            self.npc_characters[npc] = NPCCharacter(self.screen, npc)
+        self.npc_characters: dict[str, NPCCharacter] = {}
+
+        self.npc_characters[NPCRegister.WIZARD] = NPCCharacter(self.screen, NPCRegister.WIZARD)
+        self.npc_characters[NPCRegister.WIZARD].active = True
+
         cprint("character setup sucsessful ", VC.MAGENTA)
 
-    def check_input(self):
+    def handle_input(self):
+        """loocks for player input and handles it"""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                self.kill_game()
+
             elif event.type == pygame.KEYDOWN:
                 event_key = pygame.key.name(event.key)
                 if event_key == "s":
                     cprint("s", VC.YELLOW)
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1: # left click
+                    self.npc_characters[NPCRegister.WIZARD].set_target_pos(pygame.mouse.get_pos())
+
+                elif event.button == 3: # right click
+                    pass
+
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1: # left click
+                    pass
+
+                elif event.button == 3: # right click
+                    pass
+
+    def render(self) -> None:
+        """render all the importaint stuff"""
+        self.screen.fill((0, 0, 0))
+        for obj in self.npc_characters.values():
+            obj.render()
+        pygame.display.flip()
 
     def kill_game(self) -> None:
         """ends the game"""
@@ -44,9 +68,12 @@ class MainGameOBJ():
 
 def main() -> None:
     game = MainGameOBJ()
+    clock = pygame.time.Clock()
 
     while True:
-        game.check_input()
+        game.handle_input()
+        game.render()
+        clock.tick(60)
 
 if __name__ == "__main__":
     main()
