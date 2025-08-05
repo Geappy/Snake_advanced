@@ -44,6 +44,7 @@ class Player:
         ]
 
         # Atachments
+        self.weapon_start_index = 1
         self.weapon_interval = 3
         self.weapon_slots: dict[int, Optional[Weapon]] = {}
 

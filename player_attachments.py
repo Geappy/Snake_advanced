@@ -17,13 +17,14 @@ class Weapon:
         self.attached = False
         self.attached_to: Optional[int] = None
         self.size = 15
+        self.pickup_range = self.size * 2
 
     def draw(self, screen: pygame.Surface, origin: tuple[float, float]):
         screen_pos = self.pos + pygame.Vector2(origin)
         
         if not self.attached:
             # Optional: draw pickup area outline
-            pygame.draw.circle(screen, (100, 100, 100), screen_pos, self.size * 2, 3)
+            pygame.draw.circle(screen, (100, 100, 100), screen_pos, self.pickup_range, 3)
         
         color = (255, 0, 255) if self.attached else (0, 0, 255)
         pygame.draw.circle(screen, color, screen_pos, self.size)
@@ -37,9 +38,9 @@ class Weapon:
         mouse_world_pos = pygame.Vector2(mouse_pos) - pygame.Vector2(player.origin)
 
         # Check if mouse clicked within this weapon's pickup area
-        if (self.pos - mouse_world_pos).length() <= self.size * 2:
+        if (self.pos - mouse_world_pos).length() <= self.pickup_range:
             # Find the first available segment to attach to
-            for idx in range(0, len(player.snake_pos), player.weapon_interval):
+            for idx in range(player.weapon_start_index, len(player.snake_pos) - 1, player.weapon_interval):
                 if player.weapon_slots.get(idx) is None:
                     self.attached = True
                     self.attached_to = idx
