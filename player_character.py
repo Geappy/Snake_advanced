@@ -8,7 +8,7 @@ from assistent_skripts.color_print import ValidColors as VC
 
 
 class Player():
-    def __init__(self, screen, spawn: tuple = (600, 450)) -> None:
+    def __init__(self, screen, spawn: tuple) -> None:
         """
         Initiates the snake class to be redy to work on
 
@@ -144,8 +144,8 @@ class Player():
             pygame.draw.circle(self.screen, (0, 255, 0), point_to_draw, self.girthness / 2.5)
         pygame.draw.circle(self.screen, (100, 255, 100), self.snake_pos[0], self.girthness / 1.75)
 
-        for i, body_coords in enumerate(reversed(self.snake_pos)):
-            pygame.draw.circle(self.screen, (255, 0, 0), body_coords, self.girthness/3)
+        # for i, body_coords in enumerate(reversed(self.snake_pos)):
+        #     pygame.draw.circle(self.screen, (255, 0, 0), body_coords, self.girthness/3)
 
     def render(self, offset: tuple) -> None:
         """renders and updates the plaxer character"""
