@@ -8,6 +8,7 @@ from assistent_skripts.color_print import ValidColors as VC
 
 from player_character import Player
 from npc_character import NPCCharacter, NPCRegister
+from hub import HUB
 
 
 class MainGameOBJ():
@@ -18,6 +19,9 @@ class MainGameOBJ():
         # pygame.display.set_icon(pygame.image.load('textures/icon.png'))
         self.screen = pygame.display.set_mode()
         cprint("game setup sucsessful", VC.MAGENTA)
+
+        width, height = self.screen.get_size()
+        self.hub = HUB(self.screen, (0,0))
 
         self.move: bool = False
 
@@ -72,6 +76,7 @@ class MainGameOBJ():
         center_y = height // 2
         offset = (center_x - player_x, center_y - player_y)
 
+        self.hub.render(offset)
         self.player.render(offset)
         for obj in self.npc_characters.values():
             obj.render(offset)
