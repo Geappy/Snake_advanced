@@ -9,6 +9,7 @@ from assistent_skripts.color_print import ValidColors as VC
 from player_character import Player
 from npc_character import NPCCharacter, NPCRegister, NamedNPCs
 from hub import HUB
+from player_attachments import Weapon
 
 
 class MainGameOBJ():
@@ -26,6 +27,11 @@ class MainGameOBJ():
         self.hub = HUB(self.screen, self.origin, (0, 0))
 
         self.move: bool = False
+
+        self.ground_weapons = [
+            Weapon((100, 200)),
+            Weapon((300, 400)),
+        ]
 
         # setup all the characters
         self.player = Player(self.screen, self.origin, (0, 0))
@@ -50,6 +56,7 @@ class MainGameOBJ():
                 self.kill_game()
 
             elif event.type == pygame.KEYDOWN:
+                self.player.add_snake_part()
                 event_key = pygame.key.name(event.key)
                 if event_key == "s":
                     cprint("s", VC.YELLOW)
@@ -59,7 +66,8 @@ class MainGameOBJ():
                     self.move = True
 
                 elif event.button == 3: # right click
-                    self.player.add_snake_part()
+                    for weapon in self.ground_weapons:
+                        weapon.try_pickup(self.player, pygame.mouse.get_pos())
 
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1: # left click
@@ -90,6 +98,9 @@ class MainGameOBJ():
 
         # Pass the origin to all renderable objects
         self.hub.render(self.origin)
+        for weapon in self.ground_weapons:
+            if not weapon.attached:
+                weapon.draw(self.screen, self.origin)
         self.player.render(self.origin)
         for npc in self.npc_characters.values():
             npc.render(self.origin)

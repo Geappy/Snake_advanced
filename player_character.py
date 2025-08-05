@@ -1,9 +1,12 @@
 """Structure of Player characters with movement and visual rendering."""
 
 import pygame
+from typing import Optional
 
 from assistent_skripts.color_print import custom_print as cprint
 from assistent_skripts.color_print import ValidColors as VC
+
+from player_attachments import Weapon
 
 # === Color Constants ===
 GREEN = (0, 255, 0)
@@ -40,6 +43,10 @@ class Player:
             (spawn[0], spawn[1] - self.segment_length)
         ]
 
+        # Atachments
+        self.weapon_interval = 3
+        self.weapon_slots: dict[int, Optional[Weapon]] = {}
+
         # Cached values
         self.radius_outer = self.girthness / 2
         self.radius_inner = self.girthness / 2.5
@@ -75,6 +82,11 @@ class Player:
             direction.scale_to_length(self.move_speed)
             self.snake_pos[0] = (head + direction).xy
 
+    def update_weapons(self):
+        for idx, weapon in self.weapon_slots.items():
+            if weapon:
+                weapon.pos = pygame.Vector2(self.snake_pos[idx])
+
     def update_body_positions(self) -> None:
         """
         Updates positions of body segments to follow the segment before them.
@@ -91,6 +103,7 @@ class Player:
                 delta.scale_to_length(self.segment_length)
                 new_pos = pygame.Vector2(prev) + delta
                 self.snake_pos[i] = new_pos.xy
+        self.update_weapons()
 
     # ──────────────────────────────────────────────────────────────
     # Snake Structure
@@ -203,3 +216,6 @@ class Player:
         """
         self.origin = origin
         self.draw()
+        for weapon in self.weapon_slots.values():
+            if weapon:
+                weapon.draw(self.screen, self.origin)
