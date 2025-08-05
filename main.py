@@ -29,8 +29,8 @@ class MainGameOBJ():
         self.move: bool = False
 
         self.ground_weapons = [
-            Weapon((100, 200)),
-            Weapon((300, 400)),
+            Weapon(self.origin, (100, 200)),
+            Weapon(self.origin, (300, 400)),
         ]
 
         # setup all the characters
@@ -67,7 +67,7 @@ class MainGameOBJ():
 
                 elif event.button == 3: # right click
                     for weapon in self.ground_weapons:
-                        weapon.try_pickup(self.player, pygame.mouse.get_pos())
+                        weapon.handle_mouse_down(pygame.mouse.get_pos(), self.origin)
 
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1: # left click
@@ -76,7 +76,8 @@ class MainGameOBJ():
                     self.player.target_pos = self.player.snake_pos[0]
 
                 elif event.button == 3: # right click
-                    pass
+                    for weapon in self.ground_weapons:
+                        weapon.handle_mouse_up(self.player, self.origin)
 
     def render(self) -> None:
         """render all the importaint stuff"""
@@ -98,10 +99,11 @@ class MainGameOBJ():
 
         # Pass the origin to all renderable objects
         self.hub.render(self.origin)
+        self.player.render(self.origin)
         for weapon in self.ground_weapons:
             if not weapon.attached:
+                weapon.update(self.origin)
                 weapon.draw(self.screen, self.origin)
-        self.player.render(self.origin)
         for npc in self.npc_characters.values():
             npc.render(self.origin)
 
