@@ -7,14 +7,14 @@ from assistent_skripts.color_print import ValidColors as VC
 
 
 class HUB():
-    def __init__(self, screen, spawn: tuple) -> None:
+    def __init__(self, screen, origin: tuple, spawn: tuple) -> None:
         self.screen: pygame.display = screen
         self.pos = spawn
+        self.origin = origin
 
         self.hub_image = self.hub_background()
-
         image_width, image_height = self.hub_image.get_size()
-        self.pos = (self.pos[0] - (image_width // 2), self.pos[1] - (image_height // 2))
+        self.pos = (self.pos[0] - (image_width * 0.5), self.pos[1] - (image_height * 0.5))
 
     def hub_background(self) -> pygame.surface.Surface:
         image_path: str = f"textures/tarain/hub/HUB.png"
@@ -25,7 +25,8 @@ class HUB():
         new_width = int(original_width * scale_factor)
         return pygame.transform.scale(image, (new_width, sice))
 
-    def render(self, offset: tuple) -> None:
+    def render(self, origin: tuple) -> None:
         """render the HUB"""
-        self.pos = (self.pos[0] + offset[0], self.pos[1] + offset[1])
-        self.screen.blit(self.hub_image, self.pos)
+        self.origin = origin
+        origin_pos = (self.origin[0] + self.pos[0], self.origin[1] + self.pos[1])
+        self.screen.blit(self.hub_image, origin_pos)

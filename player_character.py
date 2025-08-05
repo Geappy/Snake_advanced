@@ -8,14 +8,14 @@ from assistent_skripts.color_print import ValidColors as VC
 
 
 class Player():
-    def __init__(self, screen, spawn: tuple) -> None:
+    def __init__(self, screen, origin: tuple, spawn: tuple) -> None:
         """
         Initiates the snake class to be redy to work on
 
         Args:
             screen: The screen to print on
         """
-        self.screen = screen
+        self.screen: pygame.display = screen
 
         self.max_speed: int = 8
         self.acceleration: int = 1
@@ -27,6 +27,7 @@ class Player():
         self.move_speed: int = 15
         self.target_pos: tuple = spawn
 
+        self.origin: tuple = origin
         self.snake_pos: list[tuple] = []
         self.snake_pos.append(spawn)
         self.snake_pos.append((spawn[0], spawn[1] - self.segment_length))
@@ -113,9 +114,10 @@ class Player():
             points.append((x, y))
         return points
     
-    def set_target_pos(self, new_pos) -> None:
+    def set_target_pos(self) -> None:
         """sets coordinates to move towards"""
-        self.target_pos = new_pos
+        mouse_pos = pygame.mouse.get_pos()  # screen position
+        self.target_pos = (mouse_pos[0] - self.origin[0], mouse_pos[1] - self.origin[1])
 
     def draw(self) -> None:
         """
@@ -137,22 +139,21 @@ class Player():
                 body_to_draw.append(bezier_point)
 
         for point_to_draw in body_to_draw:
-            pygame.draw.circle(self.screen, (0, 0, 0), point_to_draw, self.girthness / 2)
-        pygame.draw.circle(self.screen, (0, 0, 0), self.snake_pos[0], self.girthness / 1.5)
+            point_fom_origin = (self.origin[0] + point_to_draw[0], self.origin[1] + point_to_draw[1])
+            pygame.draw.circle(self.screen, (0, 0, 0), point_fom_origin, self.girthness / 2)
+        point_fom_origin = (self.origin[0] + self.snake_pos[0][0], self.origin[1] + self.snake_pos[0][1])
+        pygame.draw.circle(self.screen, (0, 0, 0), point_fom_origin, self.girthness / 1.5)
 
         for point_to_draw in body_to_draw:
-            pygame.draw.circle(self.screen, (0, 255, 0), point_to_draw, self.girthness / 2.5)
-        pygame.draw.circle(self.screen, (100, 255, 100), self.snake_pos[0], self.girthness / 1.75)
+            point_fom_origin = (self.origin[0] + point_to_draw[0], self.origin[1] + point_to_draw[1])
+            pygame.draw.circle(self.screen, (0, 255, 0), point_fom_origin, self.girthness / 2.5)
+        point_fom_origin = (self.origin[0] + self.snake_pos[0][0], self.origin[1] + self.snake_pos[0][1])
+        pygame.draw.circle(self.screen, (100, 255, 100), point_fom_origin, self.girthness / 1.75)
 
         # for i, body_coords in enumerate(reversed(self.snake_pos)):
         #     pygame.draw.circle(self.screen, (255, 0, 0), body_coords, self.girthness/3)
 
-    def render(self, offset: tuple) -> None:
+    def render(self, origin: tuple) -> None:
         """renders and updates the plaxer character"""
-        self.target_pos = (self.target_pos[0] + offset[0], self.target_pos[1] + offset[1])
-        self.snake_pos = [
-            (pos[0] + offset[0], pos[1] + offset[1])
-            for pos in self.snake_pos
-        ]
-
+        self.origin = origin
         self.draw()
