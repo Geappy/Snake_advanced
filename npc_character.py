@@ -1,5 +1,6 @@
+"""Structure of NPC characters with movement and visual rendering."""
+
 import os
-import math
 import pygame
 
 from assistent_skripts.color_print import custom_print as cprint

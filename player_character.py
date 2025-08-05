@@ -1,4 +1,4 @@
-"""Structure of NPC characters with movement and visual rendering."""
+"""Structure of Player characters with movement and visual rendering."""
 
 import pygame
 
