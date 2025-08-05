@@ -8,4 +8,4 @@ from assistent_skripts.color_print import ValidColors as VC
 
 class Tarain():
     def __init__(self, screen) -> None:
-        self.screen: pygame.display = screen
+        self.screen: pygame.Surface = screen

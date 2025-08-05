@@ -1,122 +1,166 @@
-"""the structure of NPC characters"""
+"""Structure of NPC characters with movement and visual rendering."""
 
 import os
-import math
 import pygame
 
 from assistent_skripts.color_print import custom_print as cprint
 from assistent_skripts.color_print import ValidColors as VC
 
 
-class NamedNPCs():
-    NIBBIN = "Nibbin" # Wizard
+class NamedNPCs:
+    NIBBIN = "Nibbin"  # Wizard
 
-class NPCRegister():
-    # friendly NPC's
+
+class NPCRegister:
+    # Friendly NPCs
     WIZARD = "wizard"
+    VILLAGE_NPCS = [WIZARD]
 
-    VILLAGE_NPCS = [
-        WIZARD,
-    ]
-
-    # hostile NPC's
+    # Hostile NPCs
     VAMPIRE = "vampire"
+    ENEMY_NPCS = [VAMPIRE]
 
-    ENEMY_NPCS = [
-        VAMPIRE,
-    ]
-
-    # animation states
+    # Animation states
     IDLE = "idle"
     RUNNING = "running"
     DEAD = "dead"
 
 
-class NPCCharacter():
-    def __init__(self, screen, origin: tuple, character: str, spawn: tuple, active: bool = False) -> None:
-        self.screen: pygame.display = screen
-        self.active: bool = active
-        self.pos: tuple = spawn
-        self.origin: tuple = origin
-        self.target_pos: tuple = self.pos
-        self.move_speed: int = 8
-        self.sice: int = 200
+class NPCCharacter:
+    def __init__(self, screen: pygame.Surface, origin: tuple[float, float], character: str,
+                 spawn: tuple[float, float], active: bool = False) -> None:
+        """
+        Initializes an animated NPC character.
 
-        # animation var
-        self.animation_state: str = NPCRegister.IDLE
-        self.character: str = character
-        self.frame: int = 0
-        self.frame_timer: int = 0
-        self.frame_delay: int = 10
-        self.animation_sice = self.count_images_in_folder()
+        Args:
+            screen: The Pygame surface to draw on.
+            origin: The screen offset (e.g. camera offset).
+            character: The NPC identifier (used for folder paths).
+            spawn: The world position to spawn the character.
+            active: Whether this NPC is currently active.
+        """
+        self.screen = screen
+        self.active = active
+        self.origin = origin
+        self.pos = pygame.Vector2(spawn)
+        self.target_pos = pygame.Vector2(spawn)
 
-    def count_images_in_folder(self, extensions={".png", ".jpg", ".jpeg"}) -> int:
+        # Movement
+        self.move_speed = 8
+        self.size = 200
+
+        # Animation
+        self.character = character
+        self.animation_state = NPCRegister.IDLE
+        self.frame = 0
+        self.frame_timer = 0
+        self.frame_delay = 10
+        self.animation_count = self._count_animation_frames()
+
+    # ──────────────────────────────────────────────────────────────
+    # Animation Handling
+    # ──────────────────────────────────────────────────────────────
+
+    def _count_animation_frames(self, extensions={".png", ".jpg", ".jpeg"}) -> int:
+        """Counts the number of frames in the current animation folder."""
         folder_path = f"textures/npcs/{self.character}/{self.animation_state}"
-        return sum(
-            1 for file in os.listdir(folder_path)
-            if os.path.isfile(os.path.join(folder_path, file)) and os.path.splitext(file)[1].lower() in extensions
-        )
-    
+        try:
+            return sum(
+                1 for file in os.listdir(folder_path)
+                if os.path.isfile(os.path.join(folder_path, file)) and os.path.splitext(file)[1].lower() in extensions
+            )
+        except FileNotFoundError:
+            cprint(f"Missing animation folder: {folder_path}", VC.RED)
+            return 0
+
     def change_animation(self, new_state: str) -> None:
+        """
+        Changes the animation state if different from current one.
+
+        Args:
+            new_state: One of NPCRegister.IDLE, RUNNING, DEAD, etc.
+        """
         if self.animation_state == new_state:
             return
+
         self.animation_state = new_state
-        self.animation_sice = self.count_images_in_folder()
+        self.animation_count = self._count_animation_frames()
         self.frame = 0
         self.frame_timer = 0
 
-    def set_target_pos(self, new_pos) -> None:
-        self.target_pos = (self.pos[0] + new_pos[0], self.pos[1] + new_pos[1])
-        self.change_animation(NPCRegister.RUNNING)
-        self.frame_delay = 3
-
-    def calc_move_pos(self) -> None:
-        """to set new position for fluid movement"""
-        # get the lengths of the right triangle
-        delta_x = self.target_pos[0] - self.pos[0]
-        delta_y = self.target_pos[1] - self.pos[1]
-
-        hypotenuse = math.sqrt(delta_x ** 2 + delta_y ** 2)
-
-        # if we are close to the target, snap to the target
-        if hypotenuse < self.move_speed:
-            self.pos = self.target_pos
-            self.change_animation(NPCRegister.IDLE)
+        # Optional tweak: adjust frame speed per animation
+        if new_state == NPCRegister.RUNNING:
+            self.frame_delay = 3
+        else:
             self.frame_delay = self.move_speed * 2
 
-        # calsculate the new animated pos
-        else:
-            angle_rad = math.atan2(delta_y, delta_x)
-            new_x = self.pos[0] + self.move_speed * math.cos(angle_rad)
-            new_y = self.pos[1] + self.move_speed * math.sin(angle_rad)
+    # ──────────────────────────────────────────────────────────────
+    # Movement
+    # ──────────────────────────────────────────────────────────────
 
-            self.pos = (new_x, new_y)
+    def set_target_pos(self, offset: tuple[float, float]) -> None:
+        """
+        Sets a new movement target based on an offset from current position.
+        """
+        self.target_pos = self.pos + pygame.Vector2(offset)
+        self.change_animation(NPCRegister.RUNNING)
 
-    def render(self, origin: tuple) -> None:
-        self.origin = origin
-        if not self.active:
+    def _move_toward_target(self) -> None:
+        """
+        Smoothly moves the character toward its target position.
+        """
+        direction = self.target_pos - self.pos
+        distance = direction.length()
+
+        if distance < self.move_speed:
             self.pos = self.target_pos
+            self.change_animation(NPCRegister.IDLE)
+        else:
+            direction.scale_to_length(self.move_speed)
+            self.pos += direction
+
+    # ──────────────────────────────────────────────────────────────
+    # Rendering
+    # ──────────────────────────────────────────────────────────────
+
+    def render(self, origin: tuple[float, float]) -> None:
+        """
+        Renders the NPC sprite to the screen at the correct position.
+
+        Args:
+            origin: The current screen offset (e.g. camera position).
+        """
+        self.origin = origin
+
+        if not self.active:
+            self.pos = self.target_pos  # snap to destination when inactive
             return
-        if self.target_pos != self.pos:
-            self.calc_move_pos()
 
-        image_path: str = f"textures/npcs/{self.character}/{self.animation_state}/{self.frame}.png"
-        image = pygame.image.load(image_path).convert_alpha()
+        if self.pos != self.target_pos:
+            self._move_toward_target()
 
-        # deal with sice and right positioning
+        # Load current frame
+        image_path = f"textures/npcs/{self.character}/{self.animation_state}/{self.frame}.png"
+        try:
+            image = pygame.image.load(image_path).convert_alpha()
+        except FileNotFoundError:
+            cprint(f"Missing image: {image_path}", VC.RED)
+            return
+
+        # Scale image
         original_width, original_height = image.get_size()
-        scale_factor = self.sice / original_height
+        scale_factor = self.size / original_height
         new_width = int(original_width * scale_factor)
-        centered_pos = (self.pos[0] - new_width * 0.5, self.pos[1] - self.sice * 0.8)
-        origin_pos = (self.origin[0] + centered_pos[0], self.origin[1] + centered_pos[1])
+        scaled_image = pygame.transform.scale(image, (new_width, self.size))
 
-        scaled_image = pygame.transform.scale(image, (new_width, self.sice))
-        self.screen.blit(scaled_image, origin_pos)
+        # Position image
+        centered_pos = pygame.Vector2(self.pos.x - new_width * 0.5, self.pos.y - self.size * 0.8)
+        screen_pos = pygame.Vector2(self.origin) + centered_pos
 
+        self.screen.blit(scaled_image, screen_pos)
+
+        # Advance frame if needed
         self.frame_timer += 1
         if self.frame_timer >= self.frame_delay:
-            self.frame += 1
             self.frame_timer = 0
-            if self.frame >= self.animation_sice:
-                self.frame = 0
-
+            self.frame = (self.frame + 1) % self.animation_count if self.animation_count > 0 else 0
