@@ -9,6 +9,7 @@ from assistent_skripts.color_print import ValidColors as VC
 from player_character import Player
 from npc_character import NPCCharacter, NPCRegister
 from hub import HUB
+from tarain import Tarain
 
 
 class MainGameOBJ():
@@ -23,6 +24,7 @@ class MainGameOBJ():
         width, height = self.screen.get_size()
         center: tuple = (width //2, height //2)
         self.hub = HUB(self.screen, center)
+        self.tarain = Tarain(self.screen, center)
 
         self.move: bool = False
 
@@ -64,7 +66,7 @@ class MainGameOBJ():
 
     def render(self) -> None:
         """render all the importaint stuff"""
-        if self.move:
+        if self.move:#                                        """  #NICE# """
             # self.npc_characters[NPCRegister.WIZARD].set_target_pos(pygame.mouse.get_pos())
             self.player.set_target_pos(pygame.mouse.get_pos())
 
@@ -78,6 +80,7 @@ class MainGameOBJ():
         offset = (center_x - player_x, center_y - player_y)
 
         self.hub.render(offset)
+        self.tarain.render(offset)
         self.player.render(offset)
         for obj in self.npc_characters.values():
             obj.render(offset)
