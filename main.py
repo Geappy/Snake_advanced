@@ -21,12 +21,13 @@ class MainGameOBJ():
         cprint("game setup sucsessful", VC.MAGENTA)
 
         width, height = self.screen.get_size()
-        self.hub = HUB(self.screen, (0,0))
+        center: tuple = (width //2, height //2)
+        self.hub = HUB(self.screen, center)
 
         self.move: bool = False
 
         # setup all the characters
-        self.player = Player(self.screen)
+        self.player = Player(self.screen, center)
         self.npc_characters: dict[str, NPCCharacter] = {}
 
         self.npc_characters[NPCRegister.WIZARD] = NPCCharacter(self.screen, NPCRegister.WIZARD)
@@ -92,10 +93,17 @@ def main() -> None:
     game = MainGameOBJ()
     clock = pygame.time.Clock()
 
+    counter: int = 0
     while True:
         game.handle_input()
         game.render()
         clock.tick(60)
+        counter += 1
+        if counter == 300:
+            game.npc_characters[NPCRegister.WIZARD].set_target_pos((1000, 600))
+        elif counter == 600:
+            game.npc_characters[NPCRegister.WIZARD].set_target_pos((-1000, -600))
+            counter = 0
 
 if __name__ == "__main__":
     main()

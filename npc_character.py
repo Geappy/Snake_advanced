@@ -62,7 +62,7 @@ class NPCCharacter():
         self.frame_timer = 0
 
     def set_target_pos(self, new_pos) -> None:
-        self.target_pos = new_pos
+        self.target_pos = (self.pos[0] + new_pos[0], self.pos[1] + new_pos[1])
         self.change_animation(NPCRegister.RUNNING)
         self.frame_delay = 3
 

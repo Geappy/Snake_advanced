@@ -8,7 +8,7 @@ from assistent_skripts.color_print import ValidColors as VC
 
 
 class Player():
-    def __init__(self, screen, spawn: tuple = (600, 450)) -> None:
+    def __init__(self, screen, spawn: tuple) -> None:
         """
         Initiates the snake class to be redy to work on
 

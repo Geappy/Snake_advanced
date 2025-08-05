@@ -13,14 +13,14 @@ class HUB():
 
         self.hub_image = self.hub_background()
 
-        # image_width, image_height = self.hub_image.get_size()
-        # self.pos = (self.pos[0] - (image_width // 2), self.pos[1] - (image_height // 2))
+        image_width, image_height = self.hub_image.get_size()
+        self.pos = (self.pos[0] - (image_width // 2), self.pos[1] - (image_height // 2))
 
     def hub_background(self) -> pygame.surface.Surface:
         image_path: str = f"textures/tarain/hub/HUB.png"
         image = pygame.image.load(image_path).convert_alpha()
         original_width, original_height = image.get_size()
-        sice = 700
+        sice = 900
         scale_factor = sice / original_height
         new_width = int(original_width * scale_factor)
         return pygame.transform.scale(image, (new_width, sice))
