@@ -21,16 +21,17 @@ class MainGameOBJ():
         cprint("game setup sucsessful", VC.MAGENTA)
 
         width, height = self.screen.get_size()
-        center: tuple = (width //2, height //2)
-        self.hub = HUB(self.screen, center)
+        self.origin: tuple = (width * 0.5, height * 0.5)
+
+        self.hub = HUB(self.screen, (0, 0), self.origin)
 
         self.move: bool = False
 
         # setup all the characters
-        self.player = Player(self.screen, center)
+        self.player = Player(self.screen, (0, 0), self.origin)
         self.npc_characters: dict[str, NPCCharacter] = {}
 
-        self.npc_characters[NPCRegister.WIZARD] = NPCCharacter(self.screen, NPCRegister.WIZARD)
+        self.npc_characters[NPCRegister.WIZARD] = NPCCharacter(self.screen, NPCRegister.WIZARD, (-600, -200), self.origin)
         self.npc_characters[NPCRegister.WIZARD].active = True
 
         cprint("character setup sucsessful ", VC.MAGENTA)
@@ -66,21 +67,27 @@ class MainGameOBJ():
         """render all the importaint stuff"""
         if self.move:
             # self.npc_characters[NPCRegister.WIZARD].set_target_pos(pygame.mouse.get_pos())
-            self.player.set_target_pos(pygame.mouse.get_pos())
+            self.player.set_target_pos()
 
         self.screen.fill((0, 0, 0))
+
+        # Let player update itself (but not calculate origin)
         self.player.update_body_positions()
 
-        player_x, player_y = self.player.snake_pos[0]
-        width, height = self.screen.get_size()
-        center_x = width // 2
-        center_y = height // 2
-        offset = (center_x - player_x, center_y - player_y)
+        # Calculate origin based on player head position
+        player_head = self.player.snake_pos[0]
+        screen_w, screen_h = self.screen.get_size()
+        self.origin = (
+            screen_w * 0.5 - player_head[0],
+            screen_h * 0.5 - player_head[1]
+        )
 
-        self.hub.render(offset)
-        self.player.render(offset)
-        for obj in self.npc_characters.values():
-            obj.render(offset)
+        # Pass the origin to all renderable objects
+        self.hub.render(self.origin)
+        self.player.render(self.origin)
+        for npc in self.npc_characters.values():
+            npc.render(self.origin)
+
         pygame.display.flip()
 
     def kill_game(self) -> None:

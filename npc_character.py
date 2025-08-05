@@ -30,10 +30,11 @@ class NPCRegister():
 
 
 class NPCCharacter():
-    def __init__(self, screen, character: str, spawn: tuple = (350, 350)) -> None:
+    def __init__(self, screen, character: str, spawn: tuple, origin: tuple) -> None:
         self.screen: pygame.display = screen
         self.active: bool = False
         self.pos: tuple = spawn
+        self.origin: tuple = origin
         self.target_pos: tuple = self.pos
         self.move_speed: int = 8
         self.sice: int = 200
@@ -88,9 +89,8 @@ class NPCCharacter():
 
             self.pos = (new_x, new_y)
 
-    def render(self, offset: tuple) -> None:
-        self.target_pos = (self.target_pos[0] + offset[0], self.target_pos[1] + offset[1])
-        self.pos = (self.pos[0] + offset[0], self.pos[1] + offset[1])
+    def render(self, origin: tuple) -> None:
+        self.origin = origin
         if not self.active:
             self.pos = self.target_pos
             return
@@ -105,9 +105,10 @@ class NPCCharacter():
         scale_factor = self.sice / original_height
         new_width = int(original_width * scale_factor)
         centered_pos = (self.pos[0] - new_width * 0.5, self.pos[1] - self.sice * 0.8)
+        origin_pos = (self.origin[0] + centered_pos[0], self.origin[1] + centered_pos[1])
 
         scaled_image = pygame.transform.scale(image, (new_width, self.sice))
-        self.screen.blit(scaled_image, centered_pos)
+        self.screen.blit(scaled_image, origin_pos)
 
         self.frame_timer += 1
         if self.frame_timer >= self.frame_delay:
