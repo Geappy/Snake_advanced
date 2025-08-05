@@ -1,110 +1,127 @@
-"""the structure of NPC characters"""
+"""Structure of NPC characters with movement and visual rendering."""
 
-import math
 import pygame
 
 from assistent_skripts.color_print import custom_print as cprint
 from assistent_skripts.color_print import ValidColors as VC
 
+# === Color Constants ===
+GREEN = (0, 255, 0)
+LIGHT_GREEN = (100, 255, 100)
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
 
-class Player():
-    def __init__(self, screen, origin: tuple, spawn: tuple) -> None:
+
+class Player:
+    def __init__(self, screen: pygame.Surface, origin: tuple[float, float], spawn: tuple[float, float]) -> None:
         """
-        Initiates the snake class to be redy to work on
+        Initializes the player snake with movement and rendering properties.
 
         Args:
-            screen: The screen to print on
+            screen: The Pygame surface to draw on.
+            origin: The local origin offset for positioning.
+            spawn: The initial spawn position of the snake.
         """
-        self.screen: pygame.display = screen
+        self.screen = screen
 
-        self.max_speed: int = 8
-        self.acceleration: int = 1
-        self.deceleration: int = 1
+        # Movement properties
+        self.max_speed = 8
+        self.acceleration = 1
+        self.deceleration = 1
+        self.move_speed = 15
+        self.target_pos = spawn
 
-        self.girthness: int = 60
-        self.segment_length: float = self.girthness * 0.8
+        # Geometry
+        self.girthness = 60
+        self.segment_length = self.girthness * 0.8
+        self.origin = origin
+        self.snake_pos: list[tuple[float, float]] = [
+            spawn,
+            (spawn[0], spawn[1] - self.segment_length)
+        ]
 
-        self.move_speed: int = 15
-        self.target_pos: tuple = spawn
+        # Cached values
+        self.radius_outer = self.girthness / 2
+        self.radius_inner = self.girthness / 2.5
+        self.radius_head_outer = self.girthness / 1.5
+        self.radius_head_inner = self.girthness / 1.75
+        self.radius_eye = self.girthness / 5
+        self.radius_pupil = self.radius_eye * 0.5
+        self.eye_distance = self.girthness * 0.3
 
-        self.origin: tuple = origin
-        self.snake_pos: list[tuple] = []
-        self.snake_pos.append(spawn)
-        self.snake_pos.append((spawn[0], spawn[1] - self.segment_length))
+    # ──────────────────────────────────────────────────────────────
+    # Input & State Update
+    # ──────────────────────────────────────────────────────────────
 
-    def add_snake_part(self):
+    def set_target_pos(self) -> None:
         """
-        Add one snake bodaypart to the end of the snake
+        Updates the target position based on current mouse position.
         """
-        x = self.snake_pos[len(self.snake_pos)-2][0] - self.snake_pos[len(self.snake_pos)-1][0]
-        y = self.snake_pos[len(self.snake_pos)-2][1] - self.snake_pos[len(self.snake_pos)-1][1]
-
-        angle_rad = math.atan2(x, y)
-
-        x = self.segment_length * math.sin(angle_rad)
-        y = self.segment_length * math.cos(angle_rad)
-
-        last_x, last_y = self.snake_pos[-1]
-        self.snake_pos.append((last_x - x, last_y - y))
-
+        mouse_pos = pygame.mouse.get_pos()
+        self.target_pos = (mouse_pos[0] - self.origin[0], mouse_pos[1] - self.origin[1])
 
     def calc_move_pos(self) -> None:
-        """to set new position for fluid movement"""
-        # get the lengths of the right triangle
-        delta_x = self.target_pos[0] - self.snake_pos[0][0]
-        delta_y = self.target_pos[1] - self.snake_pos[0][1]
+        """
+        Moves the snake head toward the target position using capped movement speed.
+        """
+        head = pygame.Vector2(self.snake_pos[0])
+        target = pygame.Vector2(self.target_pos)
+        direction = target - head
+        distance = direction.length()
 
-        hypotenuse = math.sqrt(delta_x ** 2 + delta_y ** 2)
-
-        # if we are close to the target, snap to the target
-        if hypotenuse < self.move_speed:
+        if distance < self.move_speed:
             self.snake_pos[0] = self.target_pos
-
-        # calsculate the new animated pos
         else:
-            angle_rad = math.atan2(delta_y, delta_x)
-            new_x = self.snake_pos[0][0] + self.move_speed * math.cos(angle_rad)
-            new_y = self.snake_pos[0][1] + self.move_speed * math.sin(angle_rad)
-
-            self.snake_pos[0] = (new_x, new_y)
+            direction.scale_to_length(self.move_speed)
+            self.snake_pos[0] = (head + direction).xy
 
     def update_body_positions(self) -> None:
         """
-        Calculate the correcs positions of all the body parts
+        Updates positions of body segments to follow the segment before them.
         """
         self.calc_move_pos()
-        for i, bodypart in enumerate(self.snake_pos):
-            if i == 0:
-                continue
-            previous_bodypart = self.snake_pos[i - 1]
-    
-            delta_x = bodypart[0] - previous_bodypart[0]
-            delta_y = bodypart[1] - previous_bodypart[1]
+        for i in range(1, len(self.snake_pos)):
+            current = self.snake_pos[i]
+            prev = self.snake_pos[i - 1]
 
-            hypotenuse = math.sqrt(delta_x ** 2 + delta_y ** 2)
-    
-            if hypotenuse <= self.segment_length:
-                continue
+            delta = pygame.Vector2(current) - pygame.Vector2(prev)
+            distance = delta.length()
 
-            angle_rad = math.atan2(delta_y, delta_x)
-            
-            new_x = previous_bodypart[0] + self.segment_length * math.cos(angle_rad)
-            new_y = previous_bodypart[1] + self.segment_length * math.sin(angle_rad)
-            
-            self.snake_pos[i] = (new_x, new_y)
+            if distance > self.segment_length:
+                delta.scale_to_length(self.segment_length)
+                new_pos = pygame.Vector2(prev) + delta
+                self.snake_pos[i] = new_pos.xy
 
-    def bezier_curve(self, start_point, end_point, control_point, resolution=5) -> list:
+    # ──────────────────────────────────────────────────────────────
+    # Snake Structure
+    # ──────────────────────────────────────────────────────────────
+
+    def add_snake_part(self) -> None:
         """
-        Compute points on a Bezier curve defined by start_point, end_point, and control_point.
+        Appends a new body segment at the end of the snake.
+        """
+        tail = pygame.Vector2(self.snake_pos[-1])
+        before_tail = pygame.Vector2(self.snake_pos[-2])
+        direction = (tail - before_tail).normalize()
+        new_segment = tail - direction * self.segment_length
+        self.snake_pos.append(new_segment.xy)
+
+    # ──────────────────────────────────────────────────────────────
+    # Rendering Helpers
+    # ──────────────────────────────────────────────────────────────
+
+    def bezier_curve(self, start_point, end_point, control_point, resolution: int) -> list:
+        """
+        Generates a quadratic Bezier curve through three points.
 
         Args:
-            start_point: Tuple (x, y) of the starting point
-            end_point: Tuple (x, y) of the ending point
-            control_point: Tuple (x, y) of the control point
-            resolution: How manny points are returned
+            start_point: The first anchor point.
+            end_point: The second anchor point.
+            control_point: The midpoint control point.
+            resolution: Number of interpolated points.
 
         Returns:
-            points: List of tuples representing points on the Bezier curve
+            List of curve points.
         """
         points = []
         for i in range(resolution + 1):
@@ -113,20 +130,50 @@ class Player():
             y = (1 - t) ** 2 * start_point[1] + 2 * (1 - t) * t * control_point[1] + t ** 2 * end_point[1]
             points.append((x, y))
         return points
-    
-    def set_target_pos(self) -> None:
-        """sets coordinates to move towards"""
-        mouse_pos = pygame.mouse.get_pos()  # screen position
-        self.target_pos = (mouse_pos[0] - self.origin[0], mouse_pos[1] - self.origin[1])
+
+    def player_eyes(self) -> None:
+        """
+        Draws two forward-facing eyes on the snake's head using direction vector.
+        """
+        head = self.snake_pos[0]
+        neck = self.snake_pos[1]
+        direction = pygame.Vector2(head) - pygame.Vector2(neck)
+
+        if direction.length_squared() == 0:
+            return
+
+        dir_norm = direction.normalize()
+        perp = pygame.Vector2(-dir_norm.y, dir_norm.x)
+
+        forward_offset = self.girthness * 0.2
+        head_screen = pygame.Vector2(self.origin) + pygame.Vector2(head) + dir_norm * forward_offset
+
+        left_eye_pos = head_screen + perp * self.eye_distance
+        right_eye_pos = head_screen - perp * self.eye_distance
+
+        pygame.draw.circle(self.screen, WHITE, left_eye_pos, self.radius_eye)
+        pygame.draw.circle(self.screen, WHITE, right_eye_pos, self.radius_eye)
+
+        pupil_offset = dir_norm * (self.girthness * 0.1)
+        pygame.draw.circle(self.screen, BLACK, left_eye_pos + pupil_offset, self.radius_pupil)
+        pygame.draw.circle(self.screen, BLACK, right_eye_pos + pupil_offset, self.radius_pupil)
+
+    # ──────────────────────────────────────────────────────────────
+    # Drawing & Rendering
+    # ──────────────────────────────────────────────────────────────
 
     def draw(self) -> None:
         """
-        Draws the snake in the position given by self.snake_pos
+        Renders the snake using Bezier curves and overlapping colored circles.
         """
         body_to_draw = []
 
         for i in reversed(range(1, len(self.snake_pos) - 1)):
             body_coords = self.snake_pos[i]
+            screen_pos = pygame.Vector2(self.origin) + pygame.Vector2(body_coords)
+            if not self.screen.get_rect().collidepoint(screen_pos):
+                continue
+
             prev_body_coords = (
                 (self.snake_pos[i - 1][0] + body_coords[0]) / 2,
                 (self.snake_pos[i - 1][1] + body_coords[1]) / 2
@@ -135,25 +182,24 @@ class Player():
                 (self.snake_pos[i + 1][0] + body_coords[0]) / 2,
                 (self.snake_pos[i + 1][1] + body_coords[1]) / 2
             )
-            for bezier_point in self.bezier_curve(prev_body_coords, next_body_coords, body_coords):
-                body_to_draw.append(bezier_point)
+            body_to_draw.extend(self.bezier_curve(prev_body_coords, next_body_coords, body_coords, 5))
 
-        for point_to_draw in body_to_draw:
-            point_fom_origin = (self.origin[0] + point_to_draw[0], self.origin[1] + point_to_draw[1])
-            pygame.draw.circle(self.screen, (0, 0, 0), point_fom_origin, self.girthness / 2)
-        point_fom_origin = (self.origin[0] + self.snake_pos[0][0], self.origin[1] + self.snake_pos[0][1])
-        pygame.draw.circle(self.screen, (0, 0, 0), point_fom_origin, self.girthness / 1.5)
+        # Offset all points to screen coordinates
+        screen_points = [(self.origin[0] + p[0], self.origin[1] + p[1]) for p in body_to_draw]
 
-        for point_to_draw in body_to_draw:
-            point_fom_origin = (self.origin[0] + point_to_draw[0], self.origin[1] + point_to_draw[1])
-            pygame.draw.circle(self.screen, (0, 255, 0), point_fom_origin, self.girthness / 2.5)
-        point_fom_origin = (self.origin[0] + self.snake_pos[0][0], self.origin[1] + self.snake_pos[0][1])
-        pygame.draw.circle(self.screen, (100, 255, 100), point_fom_origin, self.girthness / 1.75)
+        for p in screen_points:
+            pygame.draw.circle(self.screen, BLACK, p, self.radius_outer)
+        pygame.draw.circle(self.screen, BLACK, pygame.Vector2(self.origin) + pygame.Vector2(self.snake_pos[0]), self.radius_head_outer)
 
-        # for i, body_coords in enumerate(reversed(self.snake_pos)):
-        #     pygame.draw.circle(self.screen, (255, 0, 0), body_coords, self.girthness/3)
+        for p in screen_points:
+            pygame.draw.circle(self.screen, GREEN, p, self.radius_inner)
+        pygame.draw.circle(self.screen, LIGHT_GREEN, pygame.Vector2(self.origin) + pygame.Vector2(self.snake_pos[0]), self.radius_head_inner)
 
-    def render(self, origin: tuple) -> None:
-        """renders and updates the plaxer character"""
+        self.player_eyes()
+
+    def render(self, origin: tuple[float, float]) -> None:
+        """
+        Public method to update the snake's origin and draw it to the screen.
+        """
         self.origin = origin
         self.draw()

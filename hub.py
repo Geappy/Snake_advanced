@@ -7,8 +7,8 @@ from assistent_skripts.color_print import ValidColors as VC
 
 
 class HUB():
-    def __init__(self, screen, origin: tuple, spawn: tuple) -> None:
-        self.screen: pygame.display = screen
+    def __init__(self, screen, origin: tuple[float, float], spawn: tuple[float, float]) -> None:
+        self.screen: pygame.Surface = screen
         self.pos = spawn
         self.origin = origin
 
@@ -25,7 +25,7 @@ class HUB():
         new_width = int(original_width * scale_factor)
         return pygame.transform.scale(image, (new_width, sice))
 
-    def render(self, origin: tuple) -> None:
+    def render(self, origin: tuple[float, float]) -> None:
         """render the HUB"""
         self.origin = origin
         origin_pos = (self.origin[0] + self.pos[0], self.origin[1] + self.pos[1])

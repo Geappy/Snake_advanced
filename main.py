@@ -21,7 +21,7 @@ class MainGameOBJ():
         cprint("game setup sucsessful", VC.MAGENTA)
 
         width, height = self.screen.get_size()
-        self.origin: tuple = (width * 0.5, height * 0.5)
+        self.origin: tuple[float, float] = (width * 0.5, height * 0.5)
 
         self.hub = HUB(self.screen, self.origin, (0, 0))
 
