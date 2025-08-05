@@ -8,6 +8,9 @@ from assistent_skripts.color_print import custom_print as cprint
 from assistent_skripts.color_print import ValidColors as VC
 
 
+class NamedNPCs():
+    NIBBIN = "Nibbin" # Wizard
+
 class NPCRegister():
     # friendly NPC's
     WIZARD = "wizard"
@@ -30,9 +33,9 @@ class NPCRegister():
 
 
 class NPCCharacter():
-    def __init__(self, screen, character: str, spawn: tuple, origin: tuple) -> None:
+    def __init__(self, screen, origin: tuple, character: str, spawn: tuple, active: bool = False) -> None:
         self.screen: pygame.display = screen
-        self.active: bool = False
+        self.active: bool = active
         self.pos: tuple = spawn
         self.origin: tuple = origin
         self.target_pos: tuple = self.pos

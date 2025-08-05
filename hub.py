@@ -7,7 +7,7 @@ from assistent_skripts.color_print import ValidColors as VC
 
 
 class HUB():
-    def __init__(self, screen, spawn: tuple, origin: tuple) -> None:
+    def __init__(self, screen, origin: tuple, spawn: tuple) -> None:
         self.screen: pygame.display = screen
         self.pos = spawn
         self.origin = origin

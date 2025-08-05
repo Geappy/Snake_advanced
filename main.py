@@ -7,7 +7,7 @@ from assistent_skripts.color_print import custom_print as cprint
 from assistent_skripts.color_print import ValidColors as VC
 
 from player_character import Player
-from npc_character import NPCCharacter, NPCRegister
+from npc_character import NPCCharacter, NPCRegister, NamedNPCs
 from hub import HUB
 
 
@@ -23,16 +23,23 @@ class MainGameOBJ():
         width, height = self.screen.get_size()
         self.origin: tuple = (width * 0.5, height * 0.5)
 
-        self.hub = HUB(self.screen, (0, 0), self.origin)
+        self.hub = HUB(self.screen, self.origin, (0, 0))
 
         self.move: bool = False
 
         # setup all the characters
-        self.player = Player(self.screen, (0, 0), self.origin)
+        self.player = Player(self.screen, self.origin, (0, 0))
+        for _ in range(3):
+            self.player.add_snake_part()
         self.npc_characters: dict[str, NPCCharacter] = {}
 
-        self.npc_characters[NPCRegister.WIZARD] = NPCCharacter(self.screen, NPCRegister.WIZARD, (-600, -200), self.origin)
-        self.npc_characters[NPCRegister.WIZARD].active = True
+        self.npc_characters[NamedNPCs.NIBBIN] = NPCCharacter(
+            self.screen,
+            self.origin,
+            NPCRegister.WIZARD,
+            spawn=(-600, -200),
+            active=True
+        )
 
         cprint("character setup sucsessful ", VC.MAGENTA)
 
@@ -66,7 +73,6 @@ class MainGameOBJ():
     def render(self) -> None:
         """render all the importaint stuff"""
         if self.move:
-            # self.npc_characters[NPCRegister.WIZARD].set_target_pos(pygame.mouse.get_pos())
             self.player.set_target_pos()
 
         self.screen.fill((0, 0, 0))
@@ -107,9 +113,9 @@ def main() -> None:
         clock.tick(60)
         counter += 1
         if counter == 300:
-            game.npc_characters[NPCRegister.WIZARD].set_target_pos((1000, 600))
+            game.npc_characters[NamedNPCs.NIBBIN].set_target_pos((1000, 600))
         elif counter == 600:
-            game.npc_characters[NPCRegister.WIZARD].set_target_pos((-1000, -600))
+            game.npc_characters[NamedNPCs.NIBBIN].set_target_pos((-1000, -600))
             counter = 0
 
 if __name__ == "__main__":
