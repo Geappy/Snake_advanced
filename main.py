@@ -10,7 +10,7 @@ from assistent_skripts.color_print import ValidColors as VC
 from player_character import Player
 from npc_character import NPCCharacter, NPCRegister, NamedNPCs
 from hub import HUB
-from player_attachments import Attachment, WeaponRegister, Projectile
+from player_attachments import Attachment, WeaponRegister, Projectile, SwordSwingProjectile
 from player_hud import PlayerHUD, HUDRegister
 
 
@@ -131,16 +131,37 @@ class Game:
         pygame.display.flip()
 
     def _handle_collition(self) -> None:
-        # Check for collisions between projectiles and NPCs
+        """Handle collisions between projectiles (including melee) and NPCs."""
+
         for projectile in self.projectiles:
-            for npc in self.npc_characters.values():
+            if not projectile.alive:
+                continue
+
+            for npc_name, npc in self.npc_characters.items():
                 if not npc.active:
                     continue
 
-                # Simple circular collision (you can improve later)
                 npc_center = pygame.Vector2(npc.pos)
-                if (projectile.pos - npc_center).length() < npc.size * 0.5:
-                    npc.change_health(projectile.damage)
+
+                # Projectile logic
+                if isinstance(projectile, Projectile):
+                    if (projectile.pos - npc_center).length() < npc.size * 0.5:
+                        npc.change_health(projectile.damage)
+                        projectile.alive = False
+
+                # Melee swing logic
+                elif isinstance(projectile, SwordSwingProjectile):
+                    if npc_name in projectile.hit_npcs:
+                        continue  # Prevent multiple hits
+
+                    if (projectile.pos - npc_center).length() < projectile.range_radius:
+                        npc.change_health(projectile.damage)
+                        projectile.hit_npcs.add(npc_name)
+
+            # Update projectile lifespan
+            if isinstance(projectile, SwordSwingProjectile):
+                projectile.lifespan -= 1
+                if projectile.lifespan <= 0:
                     projectile.alive = False
 
     def _render_weapons(self) -> None:
@@ -159,7 +180,7 @@ class Game:
             weapon.draw(self.origin, angle)
 
         for projectile in self.projectiles:
-            projectile.draw(self.screen, self.origin)
+            projectile.draw(self.origin)
 
     def _render_npcs(self) -> None:
         """Render all active NPC characters."""

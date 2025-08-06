@@ -28,42 +28,74 @@ class WeaponBehavior:
 
 class GunBehavior(WeaponBehavior):
     """Gun weapon shoots two projectiles in opposite directions."""
+
+    def __init__(self, weapon: Attachment):
+        self.weapon = weapon
+
     def attack(self, projectiles: list):
         base_pos = pygame.Vector2(self.weapon.pos)
         angle = self.weapon.last_angle
 
-        # Directions
-        direction1 = pygame.Vector2(1, 0).rotate(-angle - 90).normalize()
-        direction2 = pygame.Vector2(1, 0).rotate(-angle + 90).normalize()
-
         offset_distance = 80
-        spawn1 = base_pos + direction1 * offset_distance
-        spawn2 = base_pos + direction2 * offset_distance
+        damage = self.weapon.weapon_type[WeaponRegister.DAMAGE]
 
-        # Linear velocity
+        # Linear movement of the weapon
         linear_velocity = self.weapon.pos - self.weapon.previous_pos
 
-        # Angular velocity (degrees per frame to radians)
+        # Angular velocity (converted to radians)
         d_angle = self.weapon.last_angle - self.weapon.previous_angle
         d_angle_rad = -math.radians(d_angle)
 
-        # Tangential velocities
-        tangential1 = pygame.Vector2(-direction1.y, direction1.x) * offset_distance * d_angle_rad
-        tangential2 = pygame.Vector2(-direction2.y, direction2.x) * offset_distance * d_angle_rad
+        # Fire two projectiles at ±90° from the current angle
+        for offset in [-90, 90]:
+            fire_angle = angle + offset
+            direction = pygame.Vector2(1, 0).rotate(-fire_angle).normalize()
+            spawn_pos = base_pos + direction * offset_distance
 
-        velocity1 = linear_velocity + tangential1
-        velocity2 = linear_velocity + tangential2
+            # Tangential velocity due to rotation
+            tangential_velocity = pygame.Vector2(-direction.y, direction.x) * offset_distance * d_angle_rad
+            total_velocity = linear_velocity + tangential_velocity
 
-        projectiles.append(Projectile(spawn1, direction1, self.weapon.weapon_type[WeaponRegister.DAMAGE], velocity1))
-        projectiles.append(Projectile(spawn2, direction2, self.weapon.weapon_type[WeaponRegister.DAMAGE], velocity2))
+            # Create projectile
+            projectile = Projectile(
+                screen=self.weapon.screen,
+                origin=self.weapon.origin,
+                pos=spawn_pos,
+                direction=direction,
+                damage=damage,
+                inherited_velocity=total_velocity
+            )
 
-
+            projectiles.append(projectile)
 
 class SwordBehavior(WeaponBehavior):
-    """Sword weapon for close combat."""
-    def attack(self, projectiles: list):
-        print("Slash!")
+    def __init__(self, weapon: Attachment):
+        self.weapon = weapon
 
+    def attack(self, projectiles: list):
+        base_pos = pygame.Vector2(self.weapon.pos)
+        base_angle = self.weapon.last_angle
+
+        offset_distance = 80
+        range_radius = 60
+        damage = self.weapon.weapon_type[WeaponRegister.DAMAGE]
+
+        for offset in [-90, 90]:  # Two swings on opposite sides
+            angle = base_angle + offset
+            direction = pygame.Vector2(1, 0).rotate(-angle).normalize()
+            slash_pos = base_pos + direction * offset_distance
+
+            swing = SwordSwingProjectile(
+                screen=self.weapon.screen,
+                origin=self.weapon.origin,
+                pos=slash_pos,
+                direction=direction,
+                damage=damage,
+                range_radius=range_radius,
+                lifespan=2
+            )
+
+            projectiles.append(swing)
 
 class HealingBehavior(WeaponBehavior):
     """Healing weapon restores player health."""
@@ -93,8 +125,8 @@ class WeaponRegister:
 class Attachment:
     """Attachable weapon component for the player character."""
 
-    def __init__(self, screen, player: Player, origin: tuple[float, float], pos: tuple[float, float], weapon_type: tuple[str, int]):
-        self.screen: pygame.Surface = screen
+    def __init__(self, screen: pygame.Surface, player: Player, origin: tuple[float, float], pos: tuple[float, float], weapon_type: tuple[str, int]):
+        self.screen = screen
         self.player = player
         self.origin = origin
         self.pos = pygame.Vector2(pos)
@@ -226,12 +258,16 @@ class Projectile:
     """Simple projectile shot by weapons."""
     def __init__(
         self,
+        screen: pygame.Surface,
+        origin: tuple[float, float],
         pos: pygame.Vector2,
         direction: pygame.Vector2,
         damage: int,
         inherited_velocity: pygame.Vector2 = pygame.Vector2(0, 0),
         speed: float = 15,
     ):
+        self.screen = screen
+        self.origin = origin
         self.pos = pygame.Vector2(pos)
         self.velocity = direction.normalize() * speed + inherited_velocity
         self.radius = 6
@@ -246,7 +282,40 @@ class Projectile:
         if not (-3000 < self.pos.x < 3000 and -3000 < self.pos.y < 3000):
             self.alive = False
 
-    def draw(self, screen: pygame.Surface, origin: tuple[float, float]):
+    def draw(self, origin: tuple[float, float]):
         """Render the projectile."""
+        self.origin = origin
         screen_pos = self.pos + pygame.Vector2(origin)
-        pygame.draw.circle(screen, (255, 200, 200), screen_pos, self.radius)
+        pygame.draw.circle(self.screen, (255, 200, 200), screen_pos, self.radius)
+
+class SwordSwingProjectile:
+    def __init__(
+        self,
+        screen: pygame.Surface,
+        origin: tuple[float, float],
+        pos: pygame.Vector2,
+        direction: pygame.Vector2,
+        damage: int,
+        range_radius: float = 60,
+        lifespan: int = 2
+    ):
+        self.screen = screen
+        self.origin = origin
+        self.pos = pygame.Vector2(pos)
+        self.direction = direction.normalize()
+        self.damage = damage
+        self.range_radius = range_radius
+        self.lifespan = lifespan
+        self.hit_npcs = set()
+        self.alive = True
+
+    def update(self):
+        """Move the projectile forward."""
+        pass
+
+    def draw(self, origin: tuple[float, float]):
+        # Optional: visual debug arc
+        self.origin = origin
+        world_pos = self.pos + pygame.Vector2(self.origin)
+        pygame.draw.circle(self.screen, (255, 255, 100), world_pos, self.range_radius, 2)
+
