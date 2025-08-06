@@ -12,12 +12,15 @@ class NamedNPCs:
 
 
 class NPCRegister:
+    NAME = 0
+    HP = 1
+
     # Friendly NPCs
-    WIZARD = "wizard"
+    WIZARD = ("wizard", 5)
     VILLAGE_NPCS = [WIZARD]
 
     # Hostile NPCs
-    VAMPIRE = "vampire"
+    VAMPIRE = ("vampire", 10)
     ENEMY_NPCS = [VAMPIRE]
 
     # Animation states
@@ -27,7 +30,7 @@ class NPCRegister:
 
 
 class NPCCharacter:
-    def __init__(self, screen: pygame.Surface, origin: tuple[float, float], character: str,
+    def __init__(self, screen: pygame.Surface, origin: tuple[float, float], character: tuple[str, int],
                  spawn: tuple[float, float], active: bool = False) -> None:
         """
         Initializes an animated NPC character.
@@ -57,13 +60,35 @@ class NPCCharacter:
         self.frame_delay = 10
         self.animation_count = self._count_animation_frames()
 
+        self.max_HP: int = self.character[NPCRegister.HP]
+        self.HP: int = self.max_HP
+
+    def change_health(self, amount: int, reduce: bool = True):
+        """Reduces the NPC's HP and handles death."""
+        if reduce:
+            self.HP -= amount
+            cprint(f"{self.character[NPCRegister.NAME]} took {amount} damage. Remaining HP: {self.HP}", VC.YELLOW)
+
+            if self.HP <= 0:
+                self.HP = 0
+                self.change_animation(NPCRegister.DEAD)
+                self.target_pos = self.pos
+                cprint(f"{self.character[NPCRegister.NAME]} has died!", VC.RED)
+        else:
+            self.HP += amount
+            print(f"{self.character[NPCRegister.NAME]} heald {amount}. HP: {self.HP}", VC.YELLOW)
+
+            if self.HP >= self.max_HP:
+                self.HP = self.max_HP
+                self.change_animation(NPCRegister.IDLE)
+
     # ──────────────────────────────────────────────────────────────
     # Animation Handling
     # ──────────────────────────────────────────────────────────────
 
     def _count_animation_frames(self, extensions={".png", ".jpg", ".jpeg"}) -> int:
         """Counts the number of frames in the current animation folder."""
-        folder_path = f"textures/npcs/{self.character}/{self.animation_state}"
+        folder_path = f"textures/npcs/{self.character[NPCRegister.NAME]}/{self.animation_state}"
         try:
             return sum(
                 1 for file in os.listdir(folder_path)
@@ -94,6 +119,40 @@ class NPCCharacter:
         else:
             self.frame_delay = self.move_speed * 2
 
+    def health_bar(self, screen_pos: pygame.Vector2, bar_width: int):
+        """
+        Displays the NPC's health bar above its head.
+
+        Args:
+            screen_pos: The top-left position of the NPC sprite on screen.
+            bar_width: The width of the health bar (usually matches sprite width).
+        """
+        bar_height = 10
+        bar_offset_y = 20  # Vertical offset above the sprite
+
+        # Calculate health bar position
+        bar_x = screen_pos.x
+        bar_y = screen_pos.y - bar_offset_y
+
+        # Draw red background bar
+        pygame.draw.rect(
+            self.screen,
+            (200, 50, 50),
+            (bar_x, bar_y, bar_width, bar_height),
+            border_radius=3
+        )
+
+        # Draw green foreground based on HP
+        if self.max_HP > 0:
+            hp_ratio = max(0, min(self.HP / self.max_HP, 1))  # Clamp between 0 and 1
+            green_width = int(bar_width * hp_ratio)
+            pygame.draw.rect(
+                self.screen,
+                (50, 200, 50),
+                (bar_x, bar_y, green_width, bar_height),
+                border_radius=3
+            )
+
     # ──────────────────────────────────────────────────────────────
     # Movement
     # ──────────────────────────────────────────────────────────────
@@ -102,6 +161,8 @@ class NPCCharacter:
         """
         Sets a new movement target based on an offset from current position.
         """
+        if self.animation_state == NPCRegister.DEAD:
+            return
         self.target_pos = self.pos + pygame.Vector2(offset)
         self.change_animation(NPCRegister.RUNNING)
 
@@ -109,6 +170,8 @@ class NPCCharacter:
         """
         Smoothly moves the character toward its target position.
         """
+        if self.animation_state == NPCRegister.DEAD:
+            return
         direction = self.target_pos - self.pos
         distance = direction.length()
 
@@ -133,14 +196,14 @@ class NPCCharacter:
         self.origin = origin
 
         if not self.active:
-            self.pos = self.target_pos  # snap to destination when inactive
+            self.pos = self.target_pos
             return
 
         if self.pos != self.target_pos:
             self._move_toward_target()
 
         # Load current frame
-        image_path = f"textures/npcs/{self.character}/{self.animation_state}/{self.frame}.png"
+        image_path = f"textures/npcs/{self.character[NPCRegister.NAME]}/{self.animation_state}/{self.frame}.png"
         try:
             image = pygame.image.load(image_path).convert_alpha()
         except FileNotFoundError:
@@ -158,6 +221,9 @@ class NPCCharacter:
         screen_pos = pygame.Vector2(self.origin) + centered_pos
 
         self.screen.blit(scaled_image, screen_pos)
+
+        if self.HP < self.max_HP:
+            self.health_bar(screen_pos, new_width)
 
         # Advance frame if needed
         self.frame_timer += 1

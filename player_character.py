@@ -7,7 +7,7 @@ from typing import Optional
 from assistent_skripts.color_print import custom_print as cprint
 from assistent_skripts.color_print import ValidColors as VC
 
-from player_attachments import Weapons
+from player_attachments import Attachment
 
 # === Color Constants ===
 GREEN = (0, 255, 0)
@@ -17,7 +17,7 @@ WHITE = (255, 255, 255)
 
 
 class Player:
-    def __init__(self, screen: pygame.Surface, origin: tuple[float, float], spawn: tuple[float, float]) -> None:
+    def __init__(self, screen: pygame.Surface, origin: tuple[float, float], spawn: tuple[float, float], max_HP: int) -> None:
         """
         Initializes the player snake with movement and rendering properties.
 
@@ -27,6 +27,10 @@ class Player:
             spawn: The initial spawn position of the snake.
         """
         self.screen = screen
+
+        # stats
+        self.max_HP = max_HP
+        self.HP = self.max_HP -5
 
         # Movement properties
         self.max_speed = 8
@@ -47,7 +51,7 @@ class Player:
         # Atachments
         self.weapon_start_index = 2
         self.weapon_interval = 3
-        self.weapon_slots: dict[int, Optional[Weapons]] = {}
+        self.weapon_slots: dict[int, Optional[Attachment]] = {}
 
         # Cached values
         self.radius_outer = self.girthness / 2
@@ -90,11 +94,6 @@ class Player:
         else:
             direction.scale_to_length(self.move_speed)
             self.snake_pos[0] = (head + direction).xy
-
-    def update_weapons(self):
-        for idx, weapon in self.weapon_slots.items():
-            if weapon:
-                weapon.pos = pygame.Vector2(self.snake_pos[idx])
 
     def update_body_positions(self) -> None:
         """
@@ -153,9 +152,19 @@ class Player:
 
             self.snake_pos[i] = (current + wave_offset).xy
 
-        # Update weapon positions
-        self.update_weapons()
+    def change_health(self, amount: int, reduce: bool = True):
+        """Reduces the NPC's HP and handles death."""
+        if reduce:
+            self.HP -= amount
 
+            if self.HP <= 0:
+                self.HP = 0
+                self.target_pos = self.snake_pos[0]
+        else:
+            self.HP += amount
+
+            if self.HP >= self.max_HP:
+                self.HP = self.max_HP
 
     # ──────────────────────────────────────────────────────────────
     # Snake Structure
@@ -223,7 +232,7 @@ class Player:
         pygame.draw.circle(self.screen, BLACK, left_eye_pos + pupil_offset, self.radius_pupil)
         pygame.draw.circle(self.screen, BLACK, right_eye_pos + pupil_offset, self.radius_pupil)
 
-    def draw_attachment_nodes(self, dragging_weapon: Optional[Weapons] = None) -> None:
+    def draw_attachment_nodes(self, dragging_weapon: Optional[Attachment] = None) -> None:
         """
         Draws visual markers for possible weapon attachment nodes.
         Highlights the closest one if dragging a weapon.
@@ -240,7 +249,9 @@ class Player:
                     min_distance = dist
                     closest_idx = idx
 
-        for idx in range(self.weapon_start_index, len(self.snake_pos)-1, self.weapon_interval):
+        for idx in range(self.weapon_start_index, len(self.snake_pos)-2, self.weapon_interval):
+            if idx in self.weapon_slots:
+                continue
             segment_pos = pygame.Vector2(self.snake_pos[idx])
             screen_pos = pygame.Vector2(self.origin) + segment_pos
 
@@ -312,5 +323,6 @@ class Player:
                 else:
                     angle = 0  # Segment 0 fallback
 
+                weapon.update(self.origin)
                 weapon.draw(self.origin, angle)
 

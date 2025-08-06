@@ -23,12 +23,12 @@ class PlayerHUD():
         self.burger_pos = (self.size[0] * 0.01, self.size[1] * 0.99 - burger_size[1])
 
         # player
-        self.max_health = 10
+        self.max_health = self.player_snake.max_HP
         self.max_armor = 10
         self.max_mana = 100
         self.max_length = 50
 
-        self.health: int = 10
+        self.health: int = self.player_snake.HP
         self.armor: int = 10
         self.mana: int = 100
         self.length: int = len(self.player_snake.snake_pos)
@@ -121,7 +121,8 @@ class PlayerHUD():
         self.draw_bar(self.length, self.max_length, bar_x, y_offset, base_bar_width, base_bar_height, (0, 255, 0), 5)
 
     def update(self) -> None:
-        self.length: int = len(self.player_snake.snake_pos)
+        self.health = self.player_snake.HP
+        self.length = len(self.player_snake.snake_pos)
 
     def render(self) -> None:
         self.update()
