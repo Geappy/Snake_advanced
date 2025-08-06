@@ -1,9 +1,12 @@
 """Structure of Player characters with movement and visual rendering."""
 
 import pygame
+from typing import Optional
 
 from assistent_skripts.color_print import custom_print as cprint
 from assistent_skripts.color_print import ValidColors as VC
+
+from player_attachments import Weapons
 
 # === Color Constants ===
 GREEN = (0, 255, 0)
@@ -40,6 +43,11 @@ class Player:
             (spawn[0], spawn[1] - self.segment_length)
         ]
 
+        # Atachments
+        self.weapon_start_index = 2
+        self.weapon_interval = 2
+        self.weapon_slots: dict[int, Optional[Weapons]] = {}
+
         # Cached values
         self.radius_outer = self.girthness / 2
         self.radius_inner = self.girthness / 2.5
@@ -75,6 +83,11 @@ class Player:
             direction.scale_to_length(self.move_speed)
             self.snake_pos[0] = (head + direction).xy
 
+    def update_weapons(self):
+        for idx, weapon in self.weapon_slots.items():
+            if weapon:
+                weapon.pos = pygame.Vector2(self.snake_pos[idx])
+
     def update_body_positions(self) -> None:
         """
         Updates positions of body segments to follow the segment before them.
@@ -91,6 +104,7 @@ class Player:
                 delta.scale_to_length(self.segment_length)
                 new_pos = pygame.Vector2(prev) + delta
                 self.snake_pos[i] = new_pos.xy
+        self.update_weapons()
 
     # ──────────────────────────────────────────────────────────────
     # Snake Structure
@@ -158,6 +172,37 @@ class Player:
         pygame.draw.circle(self.screen, BLACK, left_eye_pos + pupil_offset, self.radius_pupil)
         pygame.draw.circle(self.screen, BLACK, right_eye_pos + pupil_offset, self.radius_pupil)
 
+    def draw_attachment_nodes(self, dragging_weapon: Optional[Weapons] = None) -> None:
+        """
+        Draws visual markers for possible weapon attachment nodes.
+        Highlights the closest one if dragging a weapon.
+        """
+
+        closest_idx = None
+        min_distance = float('inf')
+
+        if dragging_weapon:
+            for idx in range(self.weapon_start_index, len(self.snake_pos), self.weapon_interval):
+                segment_pos = pygame.Vector2(self.snake_pos[idx])
+                dist = (segment_pos - dragging_weapon.pos).length()
+                if dist < min_distance:
+                    min_distance = dist
+                    closest_idx = idx
+
+        for idx in range(self.weapon_start_index, len(self.snake_pos)-1, self.weapon_interval):
+            segment_pos = pygame.Vector2(self.snake_pos[idx])
+            screen_pos = pygame.Vector2(self.origin) + segment_pos
+
+            if idx == closest_idx and dragging_weapon:
+                # Highlight closest node in yellow
+                pygame.draw.circle(self.screen, (255, 255, 0), screen_pos, 10)
+            else:
+                # Normal available node in cyan
+                pygame.draw.circle(self.screen, (0, 255, 255), screen_pos, 5)
+        print(f"Weapon world pos: {dragging_weapon.pos}")
+        print(f"Segment world pos: {segment_pos}")
+        print(f"Distance: {(segment_pos - dragging_weapon.pos).length()}")
+
     # ──────────────────────────────────────────────────────────────
     # Drawing & Rendering
     # ──────────────────────────────────────────────────────────────
@@ -203,3 +248,21 @@ class Player:
         """
         self.origin = origin
         self.draw()
+        for idx, weapon in self.weapon_slots.items():
+            if weapon:
+                if 0 < idx < len(self.snake_pos) - 1:
+                    prev = pygame.Vector2(self.snake_pos[idx - 1])
+                    next_ = pygame.Vector2(self.snake_pos[idx + 1])
+                    direction = next_ - prev
+                    angle = direction.angle_to(pygame.Vector2(1, 0))
+                elif idx > 0:
+                    # Fallback: use previous segment if at end
+                    current = pygame.Vector2(self.snake_pos[idx])
+                    prev = pygame.Vector2(self.snake_pos[idx - 1])
+                    direction = current - prev
+                    angle = direction.angle_to(pygame.Vector2(1, 0))
+                else:
+                    angle = 0  # Segment 0 fallback
+
+                weapon.draw(self.origin, angle)
+
