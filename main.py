@@ -44,7 +44,7 @@ class Game:
 
     def _init_player(self) -> Player:
         """Create the player and their initial body segments."""
-        player = Player(self.screen, self.origin, (0, 0))
+        player = Player(self.screen, self.origin, (0, 0), 10)
         for _ in range(3):
             player.add_snake_part()
         return player

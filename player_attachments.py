@@ -99,8 +99,12 @@ class SwordBehavior(WeaponBehavior):
 
 class HealingBehavior(WeaponBehavior):
     """Healing weapon restores player health."""
+    def __init__(self, weapon: Attachment):
+        self.weapon = weapon
+
     def attack(self, projectiles: list):
-        print("Heal +20!")
+        healing = self.weapon.weapon_type[WeaponRegister.DAMAGE]
+        self.weapon.player.change_health(healing, reduce=False)
 
 
 # -------------------------------
@@ -115,7 +119,7 @@ class WeaponRegister:
 
     GUN = ("Gun", 100, 1)
     SWORD = ("Sword", 10, 1)
-    HEALING = ("Healing", 200, 0)
+    HEALING = ("Healing", 200, 1)
 
 
 # -------------------------------

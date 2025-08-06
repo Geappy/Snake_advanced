@@ -17,7 +17,7 @@ WHITE = (255, 255, 255)
 
 
 class Player:
-    def __init__(self, screen: pygame.Surface, origin: tuple[float, float], spawn: tuple[float, float]) -> None:
+    def __init__(self, screen: pygame.Surface, origin: tuple[float, float], spawn: tuple[float, float], max_HP: int) -> None:
         """
         Initializes the player snake with movement and rendering properties.
 
@@ -27,6 +27,10 @@ class Player:
             spawn: The initial spawn position of the snake.
         """
         self.screen = screen
+
+        # stats
+        self.max_HP = max_HP
+        self.HP = self.max_HP -5
 
         # Movement properties
         self.max_speed = 8
@@ -147,6 +151,20 @@ class Player:
             wave_offset = perp * (math.sin(phase) * self.wave_amplitude * speed_factor)
 
             self.snake_pos[i] = (current + wave_offset).xy
+
+    def change_health(self, amount: int, reduce: bool = True):
+        """Reduces the NPC's HP and handles death."""
+        if reduce:
+            self.HP -= amount
+
+            if self.HP <= 0:
+                self.HP = 0
+                self.target_pos = self.snake_pos[0]
+        else:
+            self.HP += amount
+
+            if self.HP >= self.max_HP:
+                self.HP = self.max_HP
 
     # ──────────────────────────────────────────────────────────────
     # Snake Structure
