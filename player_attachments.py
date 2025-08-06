@@ -66,18 +66,22 @@ class Weapon:
     def draw(self, screen: pygame.Surface, origin: tuple[float, float]):
         self.origin = origin
         screen_pos = self.pos + pygame.Vector2(self.origin)
-        
-        if not self.attached:
-            # Optional: draw pickup area outline
-            pygame.draw.circle(screen, (100, 100, 100), screen_pos, self.pickup_range, 3)
-        
+
+        if self.dragging:
+            pygame.draw.circle(screen, (255, 0, 0), screen_pos, self.size + 5, 2)
+
         color = (255, 0, 255) if self.attached else (0, 0, 255)
         pygame.draw.circle(screen, color, screen_pos, self.size)
 
+
     def update(self, origin: tuple[float, float]):
+        self.origin = origin
         if self.dragging:
-            mouse_world = pygame.Vector2(pygame.mouse.get_pos()) - pygame.Vector2(origin)
+            print(f"Updating weapon at {self.pos}")
+            mouse_screen = pygame.Vector2(pygame.mouse.get_pos())
+            mouse_world = mouse_screen - pygame.Vector2(self.origin)
             self.pos = mouse_world + self.drag_offset
+
 
 
 

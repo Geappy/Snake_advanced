@@ -1,7 +1,8 @@
 """the main entry function of the game"""
 
-import pygame
 import sys
+import pygame
+from typing import Optional
 
 from assistent_skripts.color_print import custom_print as cprint
 from assistent_skripts.color_print import ValidColors as VC
@@ -28,6 +29,7 @@ class MainGameOBJ():
 
         self.move: bool = False
 
+        self.dragging_weapon: Optional[Weapon] = None
         self.ground_weapons = [
             Weapon(self.origin, (100, 200)),
             Weapon(self.origin, (300, 400)),
@@ -63,33 +65,40 @@ class MainGameOBJ():
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: # left click
-                    self.move = True
-
-                elif event.button == 3: # right click
                     for weapon in self.ground_weapons:
                         weapon.handle_mouse_down(pygame.mouse.get_pos(), self.origin)
+                        if weapon.dragging:
+                            self.dragging_weapon = weapon
+                            cprint(f"Started dragging weapon at {weapon.pos}", VC.YELLOW)
+
+                elif event.button == 3: # right click
+                    self.move = True
 
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1: # left click
+                    for weapon in self.ground_weapons:
+                        weapon.handle_mouse_up(self.player, self.origin)
+                        self.dragging_weapon = None
+
+                elif event.button == 3: # right click
                     self.move = False
                     # set target to zero
                     self.player.target_pos = self.player.snake_pos[0]
 
-                elif event.button == 3: # right click
-                    for weapon in self.ground_weapons:
-                        weapon.handle_mouse_up(self.player, self.origin)
-
     def render(self) -> None:
-        """render all the importaint stuff"""
+        """Render all important game objects each frame."""
+        
+        # Update target position if the player is moving
         if self.move:
             self.player.set_target_pos()
 
+        # Clear screen
         self.screen.fill((0, 0, 0))
 
-        # Let player update itself (but not calculate origin)
+        # Update player position (but not origin yet)
         self.player.update_body_positions()
 
-        # Calculate origin based on player head position
+        # Calculate world-to-screen origin based on player head position
         player_head = self.player.snake_pos[0]
         screen_w, screen_h = self.screen.get_size()
         self.origin = (
@@ -97,16 +106,27 @@ class MainGameOBJ():
             screen_h * 0.5 - player_head[1]
         )
 
-        # Pass the origin to all renderable objects
+        # Render HUB
         self.hub.render(self.origin)
+
+        # Render Player
         self.player.render(self.origin)
+
+        # Draw possible attachment nodes (if dragging a weapon)
+        if self.dragging_weapon:
+            self.player.draw_attachment_nodes(self.dragging_weapon)
+
+        # Update and draw all weapons
         for weapon in self.ground_weapons:
-            if not weapon.attached:
+            if weapon.dragging or not weapon.attached:
                 weapon.update(self.origin)
-                weapon.draw(self.screen, self.origin)
+            weapon.draw(self.screen, self.origin)
+
+        # Render NPCs
         for npc in self.npc_characters.values():
             npc.render(self.origin)
 
+        # Flip display
         pygame.display.flip()
 
     def kill_game(self) -> None:

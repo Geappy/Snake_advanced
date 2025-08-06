@@ -172,6 +172,37 @@ class Player:
         pygame.draw.circle(self.screen, BLACK, left_eye_pos + pupil_offset, self.radius_pupil)
         pygame.draw.circle(self.screen, BLACK, right_eye_pos + pupil_offset, self.radius_pupil)
 
+    def draw_attachment_nodes(self, dragging_weapon: Optional[Weapon] = None) -> None:
+        """
+        Draws visual markers for possible weapon attachment nodes.
+        Highlights the closest one if dragging a weapon.
+        """
+
+        closest_idx = None
+        min_distance = float('inf')
+
+        if dragging_weapon:
+            for idx in range(self.weapon_start_index, len(self.snake_pos), self.weapon_interval):
+                segment_pos = pygame.Vector2(self.snake_pos[idx])
+                dist = (segment_pos - dragging_weapon.pos).length()
+                if dist < min_distance:
+                    min_distance = dist
+                    closest_idx = idx
+
+        for idx in range(self.weapon_start_index, len(self.snake_pos)-1, self.weapon_interval):
+            segment_pos = pygame.Vector2(self.snake_pos[idx])
+            screen_pos = pygame.Vector2(self.origin) + segment_pos
+
+            if idx == closest_idx and dragging_weapon:
+                # Highlight closest node in yellow
+                pygame.draw.circle(self.screen, (255, 255, 0), screen_pos, 10)
+            else:
+                # Normal available node in cyan
+                pygame.draw.circle(self.screen, (0, 255, 255), screen_pos, 5)
+        print(f"Weapon world pos: {dragging_weapon.pos}")
+        print(f"Segment world pos: {segment_pos}")
+        print(f"Distance: {(segment_pos - dragging_weapon.pos).length()}")
+
     # ──────────────────────────────────────────────────────────────
     # Drawing & Rendering
     # ──────────────────────────────────────────────────────────────
