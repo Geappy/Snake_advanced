@@ -46,7 +46,7 @@ class Player:
 
         # Atachments
         self.weapon_start_index = 2
-        self.weapon_interval = 2
+        self.weapon_interval = 3
         self.weapon_slots: dict[int, Optional[Weapons]] = {}
 
         # Cached values

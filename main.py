@@ -27,7 +27,6 @@ class MainGameOBJ():
         self.origin: tuple[float, float] = (width * 0.5, height * 0.5)
 
         self.hub = HUB(self.screen, self.origin, (0, 0))
-        self.player_hud = PlayerHUD(self.screen)
 
         self.move: bool = False
 
@@ -51,6 +50,8 @@ class MainGameOBJ():
             spawn=(-600, -200),
             active=True
         )
+
+        self.player_hud = PlayerHUD(self.screen, self.player)
 
         cprint("character setup sucsessful ", VC.MAGENTA)
 
