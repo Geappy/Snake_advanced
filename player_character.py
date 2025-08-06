@@ -102,8 +102,13 @@ class Player:
         """
         self.calc_move_pos()
 
+        screen_rect = self.screen.get_rect().inflate(self.radius_head_outer, self.radius_head_outer)
+
         # Move each segment to follow the previous one
         for i in range(1, len(self.snake_pos)):
+            screen_pos = pygame.Vector2(self.origin) + pygame.Vector2(self.snake_pos[i])
+            if not screen_rect.collidepoint(screen_pos):
+                continue
             current = pygame.Vector2(self.snake_pos[i])
             prev = pygame.Vector2(self.snake_pos[i - 1])
 
@@ -122,6 +127,9 @@ class Player:
 
         # Calculate speed (distance moved) for each segment
         for i in range(len(self.snake_pos)):
+            screen_pos = pygame.Vector2(self.origin) + pygame.Vector2(self.snake_pos[i])
+            if not screen_rect.collidepoint(screen_pos):
+                continue
             current = pygame.Vector2(self.snake_pos[i])
             prev = pygame.Vector2(self.prev_snake_pos[i])
             self.segment_speeds[i] = (current - prev).length()
@@ -134,6 +142,9 @@ class Player:
 
         # Apply sine wave to segments (starting after head and neck)
         for i in range(2, len(self.snake_pos)):
+            screen_pos = pygame.Vector2(self.origin) + pygame.Vector2(self.snake_pos[i])
+            if not screen_rect.collidepoint(screen_pos):
+                continue
             prev = pygame.Vector2(self.snake_pos[i - 1])
             current = pygame.Vector2(self.snake_pos[i])
             direction = current - prev
@@ -232,6 +243,36 @@ class Player:
         pygame.draw.circle(self.screen, BLACK, left_eye_pos + pupil_offset, self.radius_pupil)
         pygame.draw.circle(self.screen, BLACK, right_eye_pos + pupil_offset, self.radius_pupil)
 
+    def draw_tongue(self):
+        """
+        Draw a wiggly tongue sticking out from the snake's head.
+        """
+        head = pygame.Vector2(self.snake_pos[0])
+        neck = pygame.Vector2(self.snake_pos[1])
+        direction = head - neck
+
+        if direction.length_squared() == 0:
+            return
+
+        dir_norm = direction.normalize()
+        perp = pygame.Vector2(-dir_norm.y, dir_norm.x)
+        screen_head = head + pygame.Vector2(self.origin)
+
+        tongue_length = self.girthness * 0.8
+        tongue_thickness = 6
+
+        # Wiggle using sine wave
+        wiggle = perp * math.sin(self.time * 2) * 5
+        tip_pos = screen_head + dir_norm * tongue_length + wiggle
+
+        pygame.draw.line(
+            self.screen,
+            (255, 100, 100),  # Pinkish tongue color
+            screen_head,
+            tip_pos,
+            tongue_thickness
+        )
+
     def draw_attachment_nodes(self, dragging_weapon: Optional[Attachment] = None) -> None:
         """
         Draws visual markers for possible weapon attachment nodes.
@@ -272,11 +313,14 @@ class Player:
         """
         body_to_draw = []
 
+        screen_rect = self.screen.get_rect().inflate(self.radius_head_outer, self.radius_head_outer)
+
         for i in reversed(range(1, len(self.snake_pos) - 1)):
-            body_coords = self.snake_pos[i]
-            screen_pos = pygame.Vector2(self.origin) + pygame.Vector2(body_coords)
-            if not self.screen.get_rect().collidepoint(screen_pos):
+            segment_screen = pygame.Vector2(self.origin) + pygame.Vector2(self.snake_pos[i])
+            if not screen_rect.collidepoint(segment_screen):
                 continue
+
+            body_coords = self.snake_pos[i]
 
             prev_body_coords = (
                 (self.snake_pos[i - 1][0] + body_coords[0]) / 2,
@@ -294,6 +338,8 @@ class Player:
         for p in screen_points:
             pygame.draw.circle(self.screen, BLACK, p, self.radius_outer)
         pygame.draw.circle(self.screen, BLACK, pygame.Vector2(self.origin) + pygame.Vector2(self.snake_pos[0]), self.radius_head_outer)
+
+        self.draw_tongue()
 
         for p in screen_points:
             pygame.draw.circle(self.screen, GREEN, p, self.radius_inner)
