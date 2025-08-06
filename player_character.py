@@ -106,9 +106,6 @@ class Player:
 
         # Move each segment to follow the previous one
         for i in range(1, len(self.snake_pos)):
-            screen_pos = pygame.Vector2(self.origin) + pygame.Vector2(self.snake_pos[i])
-            if not screen_rect.collidepoint(screen_pos):
-                continue
             current = pygame.Vector2(self.snake_pos[i])
             prev = pygame.Vector2(self.snake_pos[i - 1])
 
