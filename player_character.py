@@ -250,9 +250,6 @@ class Player:
             else:
                 # Normal available node in cyan
                 pygame.draw.circle(self.screen, (0, 255, 255), screen_pos, 5)
-        print(f"Weapon world pos: {dragging_weapon.pos}")
-        print(f"Segment world pos: {segment_pos}")
-        print(f"Distance: {(segment_pos - dragging_weapon.pos).length()}")
 
     # ──────────────────────────────────────────────────────────────
     # Drawing & Rendering
