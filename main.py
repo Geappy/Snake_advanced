@@ -10,7 +10,7 @@ from assistent_skripts.color_print import ValidColors as VC
 from player_character import Player
 from npc_character import NPCCharacter, NPCRegister, NamedNPCs
 from hub import HUB
-from player_attachments import Atachment, WeaponRegister, Projectile
+from player_attachments import Attachment, WeaponRegister, Projectile
 from player_hud import PlayerHUD, HUDRegister
 
 
@@ -44,12 +44,12 @@ class MainGameOBJ():
             active=True
         )
 
-        self.dragging_weapon: Optional[Atachment] = None
+        self.dragging_weapon: Optional[Attachment] = None
         self.projectiles: list[Projectile] = []
         self.ground_weapons = [
-            Atachment(self.screen, self.player, self.origin, (100, 200), weapon_type=WeaponRegister.GUN),
-            Atachment(self.screen, self.player, self.origin, (300, 400), weapon_type=WeaponRegister.SWORD),
-            Atachment(self.screen, self.player, self.origin, (500, 300), weapon_type=WeaponRegister.HEALING),
+            Attachment(self.screen, self.player, self.origin, (100, 200), weapon_type=WeaponRegister.GUN),
+            Attachment(self.screen, self.player, self.origin, (300, 400), weapon_type=WeaponRegister.SWORD),
+            Attachment(self.screen, self.player, self.origin, (500, 300), weapon_type=WeaponRegister.HEALING),
         ]
 
         self.player_hud = PlayerHUD(self.screen, self.player)

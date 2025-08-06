@@ -1,4 +1,4 @@
-"""Structure of atachments that the Player can add to there Character."""
+"""Structure of attachments that the Player can add to their character."""
 
 from __future__ import annotations
 
@@ -12,55 +12,56 @@ if TYPE_CHECKING:
     from player_character import Player
 
 
+# -------------------------------
+# Weapon Behavior Base & Subtypes
+# -------------------------------
+
 class WeaponBehavior:
-    def __init__(self, weapon: Atachment):
+    """Base class for defining weapon-specific behaviors."""
+    def __init__(self, weapon: Attachment):
         self.weapon = weapon
 
     def attack(self, projectiles: list):
-        raise NotImplementedError
+        raise NotImplementedError("Weapon behavior must implement 'attack'")
+
 
 class GunBehavior(WeaponBehavior):
-    def __init__(self, weapon: Atachment):
-        self.weapon = weapon
-
+    """Gun weapon shoots two projectiles in opposite directions."""
     def attack(self, projectiles: list):
         base_pos = pygame.Vector2(self.weapon.pos)
         angle = getattr(self.weapon, "last_angle", 0)
 
-        # Main and opposite directions
+        # Directions offset by ±90 degrees from weapon's angle
         direction1 = pygame.Vector2(1, 0).rotate(-angle - 90).normalize()
         direction2 = pygame.Vector2(1, 0).rotate(-angle + 90).normalize()
 
-        # Distance to offset from the weapon attachment (tweak this value)
         offset_distance = 80
-
-        # Calculate spawn positions further out from the weapon
         spawn1 = base_pos + direction1 * offset_distance
         spawn2 = base_pos + direction2 * offset_distance
 
-        # Create projectiles
         inherited_velocity = self.weapon.pos - self.weapon.previous_pos
         projectiles.append(Projectile(spawn1, direction1, inherited_velocity))
         projectiles.append(Projectile(spawn2, direction2, inherited_velocity))
 
 
-
 class SwordBehavior(WeaponBehavior):
-    def __init__(self, weapon: Atachment):
-        self.weapon = weapon
-
+    """Sword weapon for close combat."""
     def attack(self, projectiles: list):
         print("Slash!")
 
-class HealingBehavior(WeaponBehavior):
-    def __init__(self, weapon: Atachment):
-        self.weapon = weapon
 
+class HealingBehavior(WeaponBehavior):
+    """Healing weapon restores player health."""
     def attack(self, projectiles: list):
         print("Heal +20!")
 
+
+# -------------------------------
+# Weapon Register
+# -------------------------------
+
 class WeaponRegister:
-    # Weapon types (must match texture file prefixes)
+    """Weapon type metadata (name and cooldown)."""
     NAME = 0
     COOLDOWN = 1
 
@@ -68,28 +69,38 @@ class WeaponRegister:
     SWORD = ("Sword", 10)
     HEALING = ("Healing", 200)
 
-class Atachment:
+
+# -------------------------------
+# Attachment Class
+# -------------------------------
+
+class Attachment:
+    """Attachable weapon component for the player character."""
+
     def __init__(self, screen, player: Player, origin: tuple[float, float], pos: tuple[float, float], weapon_type: tuple[str, int]):
         self.screen: pygame.Surface = screen
         self.player = player
         self.origin = origin
         self.pos = pygame.Vector2(pos)
-        self.previous_pos  = pygame.Vector2(pos)
-        self.attached = False
-        self.attached_to: Optional[int] = None
+        self.previous_pos = pygame.Vector2(pos)
+
         self.size = 50
         self.pickup_range = self.size * 2
-        self.last_angle: float = 0
+        self.last_angle = 0
 
-        self.weapon_name = weapon_type[WeaponRegister.NAME]
-        self.texture = self.load_texture(self.weapon_name)
+        self.attached = False
+        self.attached_to: Optional[int] = None
 
         self.dragging = False
         self.drag_offset = pygame.Vector2(0, 0)
 
-        self.cooldown: int = 0
-        self.cooldown_time: int = weapon_type[WeaponRegister.COOLDOWN]
+        self.weapon_name = weapon_type[WeaponRegister.NAME]
+        self.cooldown = 0
+        self.cooldown_time = weapon_type[WeaponRegister.COOLDOWN]
 
+        self.texture = self.load_texture(self.weapon_name)
+
+        # Assign behavior based on weapon type
         if weapon_type == WeaponRegister.GUN:
             self.behavior = GunBehavior(self)
         elif weapon_type == WeaponRegister.SWORD:
@@ -100,6 +111,7 @@ class Atachment:
             raise ValueError(f"Unknown weapon type: {weapon_type}")
 
     def attack(self, projectiles: list):
+        """Trigger the weapon's attack behavior."""
         if self.cooldown > 0:
             self.cooldown -= 1
             return
@@ -112,35 +124,27 @@ class Atachment:
         self.cooldown = self.cooldown_time
 
     def load_texture(self, weapon_type: str) -> pygame.Surface:
+        """Load and scale weapon texture based on type."""
         path = f"textures/player/atachments/{weapon_type}_atachment.png"
         try:
             image = pygame.image.load(path).convert_alpha()
-
-            # Target height (e.g., match weapon size)
             target_height = self.size * 2
-            original_width, original_height = image.get_size()
-
-            # Calculate new width while keeping aspect ratio
-            aspect_ratio = original_width / original_height
+            aspect_ratio = image.get_width() / image.get_height()
             target_width = int(target_height * aspect_ratio)
-
-            scaled_image = pygame.transform.scale(image, (target_width, int(target_height)))
-            return scaled_image
-
+            return pygame.transform.scale(image, (target_width, int(target_height)))
         except Exception as e:
             cprint(f"[ERROR] Failed to load texture: {path}", VC.RED)
             raise e
 
     def handle_mouse_down(self, mouse_pos: tuple[float, float], origin: tuple[float, float], player: Player):
+        """Start dragging the weapon if clicked within hit circle."""
         self.origin = origin
-        mouse_world = pygame.Vector2(mouse_pos) - pygame.Vector2(self.origin)
+        mouse_world = pygame.Vector2(mouse_pos) - pygame.Vector2(origin)
 
-        # Check if mouse clicked within the weapon hit circle
         if (self.pos - mouse_world).length() <= self.size:
             self.dragging = True
             self.drag_offset = self.pos - mouse_world
 
-            # Detach from player if currently attached
             if self.attached:
                 self.attached = False
                 if self.attached_to is not None and player.weapon_slots.get(self.attached_to) == self:
@@ -148,66 +152,68 @@ class Atachment:
                 self.attached_to = None
 
     def handle_mouse_up(self, player: Player, origin: tuple[float, float]):
+        """Stop dragging and try to attach to a node if nearby."""
         self.origin = origin
         if not self.dragging:
             return
         self.dragging = False
 
-        # Try to snap to nearest weapon node
-        for idx in range(player.weapon_start_index, len(player.snake_pos)-1, player.weapon_interval):
+        for idx in range(player.weapon_start_index, len(player.snake_pos) - 1, player.weapon_interval):
             node_pos = pygame.Vector2(player.snake_pos[idx])
             if (self.pos - node_pos).length() < self.size * 2:
-                # Check if slot is available
                 existing = player.weapon_slots.get(idx)
                 if existing and existing is not self:
                     cprint(f"Node {idx} already has a weapon", VC.RED)
-                    return  # prevent overwriting (or handle swap here)
+                    return
 
-                # Detach from old node if needed
                 if self.attached_to is not None:
                     player.weapon_slots[self.attached_to] = None
 
-                # Attach to new node
                 self.attached = True
                 self.attached_to = idx
                 player.weapon_slots[idx] = self
                 self.pos = node_pos
                 cprint(f"Weapon snapped to node {idx}", VC.GREEN)
                 return
+
         cprint("Dropped weapon without snapping to a node", VC.YELLOW)
 
     def draw(self, origin: tuple[float, float], angle: float = 0):
+        """Draw the weapon at its current position."""
         screen_pos = self.pos + pygame.Vector2(origin)
         self.last_angle = angle
 
-        corrected_angle = angle
-        if self.attached:
-            corrected_angle += 90
-
+        corrected_angle = angle + 90 if self.attached else angle
         rotated_image = pygame.transform.rotate(self.texture, corrected_angle)
         rect = rotated_image.get_rect(center=screen_pos)
         self.screen.blit(rotated_image, rect)
 
     def update(self, origin: tuple[float, float]):
-        if self.attached:
-            self.previous_pos  = self.pos
-            self.pos = self.player.snake_pos[self.attached_to]
-
+        """Update weapon position either by drag or attachment."""
         self.origin = origin
-        if self.dragging:
+        if self.attached:
+            self.previous_pos = self.pos
+            self.pos = self.player.snake_pos[self.attached_to]
+        elif self.dragging:
             mouse_screen = pygame.Vector2(pygame.mouse.get_pos())
             mouse_world = mouse_screen - pygame.Vector2(self.origin)
             self.pos = mouse_world + self.drag_offset
 
+
+# -------------------------------
+# Projectile Class
+# -------------------------------
+
 class Projectile:
+    """Simple projectile shot by weapons."""
     def __init__(
-            self,
-            pos: pygame.Vector2,
-            direction: pygame.Vector2,
-            inherited_velocity: pygame.Vector2 = pygame.Vector2(0, 0),
-            speed: float = 15,
-            damage: int = 10
-        ):
+        self,
+        pos: pygame.Vector2,
+        direction: pygame.Vector2,
+        inherited_velocity: pygame.Vector2 = pygame.Vector2(0, 0),
+        speed: float = 15,
+        damage: int = 10
+    ):
         self.pos = pygame.Vector2(pos)
         self.velocity = direction.normalize() * speed + inherited_velocity
         self.radius = 6
@@ -215,12 +221,14 @@ class Projectile:
         self.alive = True
 
     def update(self):
+        """Move the projectile forward."""
         self.pos += self.velocity
 
-        # Optional: kill if too far
+        # Deactivate if out of bounds
         if not (-3000 < self.pos.x < 3000 and -3000 < self.pos.y < 3000):
             self.alive = False
 
     def draw(self, screen: pygame.Surface, origin: tuple[float, float]):
+        """Render the projectile."""
         screen_pos = self.pos + pygame.Vector2(origin)
         pygame.draw.circle(screen, (255, 200, 200), screen_pos, self.radius)
