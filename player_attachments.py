@@ -13,19 +13,48 @@ if TYPE_CHECKING:
 
 
 class WeaponBehavior:
-    def attack(self):
+    def __init__(self, weapon: Atachment):
+        self.weapon = weapon
+
+    def attack(self, projectiles: list):
         raise NotImplementedError
 
 class GunBehavior(WeaponBehavior):
-    def attack(self):
-        print("Bang!")
+    def __init__(self, weapon: Atachment):
+        self.weapon = weapon
+
+    def attack(self, projectiles: list):
+        base_pos = pygame.Vector2(self.weapon.pos)
+        angle = getattr(self.weapon, "last_angle", 0)
+
+        # Main and opposite directions
+        direction1 = pygame.Vector2(1, 0).rotate(-angle - 90).normalize()
+        direction2 = pygame.Vector2(1, 0).rotate(-angle + 90).normalize()
+
+        # Distance to offset from the weapon attachment (tweak this value)
+        offset_distance = 80
+
+        # Calculate spawn positions further out from the weapon
+        spawn1 = base_pos + direction1 * offset_distance
+        spawn2 = base_pos + direction2 * offset_distance
+
+        # Create projectiles
+        projectiles.append(Projectile(spawn1, direction1))
+        projectiles.append(Projectile(spawn2, direction2))
+
 
 class SwordBehavior(WeaponBehavior):
-    def attack(self):
+    def __init__(self, weapon: Atachment):
+        self.weapon = weapon
+
+    def attack(self, projectiles: list):
         print("Slash!")
 
 class HealingBehavior(WeaponBehavior):
-    def attack(self):
+    def __init__(self, weapon: Atachment):
+        self.weapon = weapon
+
+    def attack(self, projectiles: list):
         print("Heal +20!")
 
 class WeaponRegister:
@@ -37,7 +66,7 @@ class WeaponRegister:
     SWORD = ("Sword", 10)
     HEALING = ("Healing", 200)
 
-class Weapons:
+class Atachment:
     def __init__(self, screen, origin: tuple[float, float], pos: tuple[float, float], weapon_type: tuple[str, int]):
         self.screen: pygame.Surface = screen
         self.origin = origin
@@ -46,6 +75,7 @@ class Weapons:
         self.attached_to: Optional[int] = None
         self.size = 50
         self.pickup_range = self.size * 2
+        self.last_angle: float = 0
 
         self.weapon_name = weapon_type[WeaponRegister.NAME]
         self.texture = self.load_texture(self.weapon_name)
@@ -57,22 +87,24 @@ class Weapons:
         self.cooldown_time: int = weapon_type[WeaponRegister.COOLDOWN]
 
         if weapon_type == WeaponRegister.GUN:
-            self.behavior = GunBehavior()
+            self.behavior = GunBehavior(self)
         elif weapon_type == WeaponRegister.SWORD:
-            self.behavior = SwordBehavior()
+            self.behavior = SwordBehavior(self)
         elif weapon_type == WeaponRegister.HEALING:
-            self.behavior = HealingBehavior()
+            self.behavior = HealingBehavior(self)
         else:
             raise ValueError(f"Unknown weapon type: {weapon_type}")
 
-    def attack(self):
+    def attack(self, projectiles: list):
         if self.cooldown > 0:
             self.cooldown -= 1
             return
+
         try:
-            self.behavior.attack()
-        except:
-            print("No behavior assigned to this weapon.")
+            self.behavior.attack(projectiles)
+        except Exception as e:
+            print(f"[ERROR] Failed to attack: {e}")
+
         self.cooldown = self.cooldown_time
 
     def load_texture(self, weapon_type: str) -> pygame.Surface:
@@ -142,8 +174,8 @@ class Weapons:
 
     def draw(self, origin: tuple[float, float], angle: float = 0):
         screen_pos = self.pos + pygame.Vector2(origin)
+        self.last_angle = angle
 
-        # Try different correction angles here
         corrected_angle = angle
         if self.attached:
             corrected_angle += 90
@@ -158,3 +190,22 @@ class Weapons:
             mouse_screen = pygame.Vector2(pygame.mouse.get_pos())
             mouse_world = mouse_screen - pygame.Vector2(self.origin)
             self.pos = mouse_world + self.drag_offset
+
+class Projectile:
+    def __init__(self, pos: pygame.Vector2, direction: pygame.Vector2, speed: float = 15, damage: int = 10):
+        self.pos = pygame.Vector2(pos)
+        self.velocity = direction.normalize() * speed
+        self.radius = 6
+        self.damage = damage
+        self.alive = True
+
+    def update(self):
+        self.pos += self.velocity
+
+        # Optional: kill if too far
+        if not (-3000 < self.pos.x < 3000 and -3000 < self.pos.y < 3000):
+            self.alive = False
+
+    def draw(self, screen: pygame.Surface, origin: tuple[float, float]):
+        screen_pos = self.pos + pygame.Vector2(origin)
+        pygame.draw.circle(screen, (255, 200, 200), screen_pos, self.radius)

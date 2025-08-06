@@ -10,7 +10,7 @@ from assistent_skripts.color_print import ValidColors as VC
 from player_character import Player
 from npc_character import NPCCharacter, NPCRegister, NamedNPCs
 from hub import HUB
-from player_attachments import Weapons, WeaponRegister
+from player_attachments import Atachment, WeaponRegister, Projectile
 from player_hud import PlayerHUD, HUDRegister
 
 
@@ -30,11 +30,12 @@ class MainGameOBJ():
 
         self.move: bool = False
 
-        self.dragging_weapon: Optional[Weapons] = None
+        self.dragging_weapon: Optional[Atachment] = None
+        self.projectiles: list[Projectile] = []
         self.ground_weapons = [
-            Weapons(self.screen, self.origin, (100, 200), weapon_type=WeaponRegister.GUN),
-            Weapons(self.screen, self.origin, (300, 400), weapon_type=WeaponRegister.SWORD),
-            Weapons(self.screen, self.origin, (500, 300), weapon_type=WeaponRegister.HEALING),
+            Atachment(self.screen, self.origin, (100, 200), weapon_type=WeaponRegister.GUN),
+            Atachment(self.screen, self.origin, (300, 400), weapon_type=WeaponRegister.SWORD),
+            Atachment(self.screen, self.origin, (500, 300), weapon_type=WeaponRegister.HEALING),
         ]
 
         # setup all the characters
@@ -112,6 +113,14 @@ class MainGameOBJ():
 
             weapon.draw(self.origin, angle=angle)
 
+        # Update and draw projectiles
+        for projectile in self.projectiles:
+            projectile.update()
+            projectile.draw(self.screen, self.origin)
+
+        # Clean up dead ones
+        self.projectiles = [p for p in self.projectiles if p.alive]
+
     def render(self) -> None:
         """Render all important game objects each frame."""
         
@@ -159,7 +168,8 @@ class MainGameOBJ():
 
     def attack(self) -> None:
         for weapon in self.ground_weapons:
-            weapon.attack()
+            if weapon.attached:
+                weapon.attack(self.projectiles)
 
     def kill_game(self) -> None:
         """ends the game"""
@@ -174,8 +184,8 @@ def main() -> None:
     counter: int = 0
     while True:
         game.handle_input()
-        game.attack()
         game.render()
+        game.attack()
         clock.tick(60)
         counter += 1
         if counter == 300:
