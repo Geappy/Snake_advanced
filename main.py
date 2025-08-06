@@ -2,6 +2,7 @@
 
 import sys
 import pygame
+import random
 from typing import Optional
 
 from assistent_skripts.color_print import custom_print as cprint
@@ -63,11 +64,27 @@ class Game:
 
     def _init_ground_weapons(self) -> list[Attachment]:
         """Create a list of weapons lying on the ground."""
-        return [
-            Attachment(self.screen, self.player, self.origin, (100, 200), WeaponRegister.GUN),
-            Attachment(self.screen, self.player, self.origin, (300, 400), WeaponRegister.SWORD),
-            Attachment(self.screen, self.player, self.origin, (500, 300), WeaponRegister.HEALING),
-        ]
+        weapon_types = [WeaponRegister.GUN, WeaponRegister.SWORD, WeaponRegister.HEALING]
+
+        # Random number of attachments to spawn
+        num_to_spawn = random.randint(3, 20)
+
+        # Create attachments
+        attachments: list[Attachment] = []
+
+        for _ in range(num_to_spawn):
+            random_pos = (random.randint(-1000, 1000), random.randint(-1000, 1000))
+            weapon_type = random.choice(weapon_types)
+            
+            new_attachment = Attachment(
+                screen=self.screen,
+                player=self.player,
+                origin=self.origin,
+                pos=random_pos,
+                weapon_type=weapon_type
+            )
+            attachments.append(new_attachment)
+        return attachments
 
     def get_screen_center(self) -> tuple[float, float]:
         width, height = self.screen.get_size()
@@ -166,7 +183,7 @@ class Game:
 
     def _render_weapons(self) -> None:
         """Update and render unattached weapons and projectiles."""
-        for weapon in self.ground_weapons:
+        for weapon in reversed(self.ground_weapons):
             if weapon.attached:
                 continue
 
