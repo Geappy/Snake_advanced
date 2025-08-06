@@ -39,8 +39,10 @@ class GunBehavior(WeaponBehavior):
         spawn2 = base_pos + direction2 * offset_distance
 
         # Create projectiles
-        projectiles.append(Projectile(spawn1, direction1))
-        projectiles.append(Projectile(spawn2, direction2))
+        inherited_velocity = self.weapon.pos - self.weapon.previous_pos
+        projectiles.append(Projectile(spawn1, direction1, inherited_velocity))
+        projectiles.append(Projectile(spawn2, direction2, inherited_velocity))
+
 
 
 class SwordBehavior(WeaponBehavior):
@@ -67,10 +69,12 @@ class WeaponRegister:
     HEALING = ("Healing", 200)
 
 class Atachment:
-    def __init__(self, screen, origin: tuple[float, float], pos: tuple[float, float], weapon_type: tuple[str, int]):
+    def __init__(self, screen, player: Player, origin: tuple[float, float], pos: tuple[float, float], weapon_type: tuple[str, int]):
         self.screen: pygame.Surface = screen
+        self.player = player
         self.origin = origin
         self.pos = pygame.Vector2(pos)
+        self.previous_pos  = pygame.Vector2(pos)
         self.attached = False
         self.attached_to: Optional[int] = None
         self.size = 50
@@ -185,6 +189,10 @@ class Atachment:
         self.screen.blit(rotated_image, rect)
 
     def update(self, origin: tuple[float, float]):
+        if self.attached:
+            self.previous_pos  = self.pos
+            self.pos = self.player.snake_pos[self.attached_to]
+
         self.origin = origin
         if self.dragging:
             mouse_screen = pygame.Vector2(pygame.mouse.get_pos())
@@ -192,9 +200,16 @@ class Atachment:
             self.pos = mouse_world + self.drag_offset
 
 class Projectile:
-    def __init__(self, pos: pygame.Vector2, direction: pygame.Vector2, speed: float = 15, damage: int = 10):
+    def __init__(
+            self,
+            pos: pygame.Vector2,
+            direction: pygame.Vector2,
+            inherited_velocity: pygame.Vector2 = pygame.Vector2(0, 0),
+            speed: float = 15,
+            damage: int = 10
+        ):
         self.pos = pygame.Vector2(pos)
-        self.velocity = direction.normalize() * speed
+        self.velocity = direction.normalize() * speed + inherited_velocity
         self.radius = 6
         self.damage = damage
         self.alive = True

@@ -91,11 +91,6 @@ class Player:
             direction.scale_to_length(self.move_speed)
             self.snake_pos[0] = (head + direction).xy
 
-    def update_weapons(self):
-        for idx, weapon in self.weapon_slots.items():
-            if weapon:
-                weapon.pos = pygame.Vector2(self.snake_pos[idx])
-
     def update_body_positions(self) -> None:
         """
         Updates positions of body segments to follow the segment before them.
@@ -152,10 +147,6 @@ class Player:
             wave_offset = perp * (math.sin(phase) * self.wave_amplitude * speed_factor)
 
             self.snake_pos[i] = (current + wave_offset).xy
-
-        # Update weapon positions
-        self.update_weapons()
-
 
     # ──────────────────────────────────────────────────────────────
     # Snake Structure
@@ -312,5 +303,6 @@ class Player:
                 else:
                     angle = 0  # Segment 0 fallback
 
+                weapon.update(self.origin)
                 weapon.draw(self.origin, angle)
 

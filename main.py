@@ -30,14 +30,6 @@ class MainGameOBJ():
 
         self.move: bool = False
 
-        self.dragging_weapon: Optional[Atachment] = None
-        self.projectiles: list[Projectile] = []
-        self.ground_weapons = [
-            Atachment(self.screen, self.origin, (100, 200), weapon_type=WeaponRegister.GUN),
-            Atachment(self.screen, self.origin, (300, 400), weapon_type=WeaponRegister.SWORD),
-            Atachment(self.screen, self.origin, (500, 300), weapon_type=WeaponRegister.HEALING),
-        ]
-
         # setup all the characters
         self.player = Player(self.screen, self.origin, (0, 0))
         for _ in range(3):
@@ -51,6 +43,14 @@ class MainGameOBJ():
             spawn=(-600, -200),
             active=True
         )
+
+        self.dragging_weapon: Optional[Atachment] = None
+        self.projectiles: list[Projectile] = []
+        self.ground_weapons = [
+            Atachment(self.screen, self.player, self.origin, (100, 200), weapon_type=WeaponRegister.GUN),
+            Atachment(self.screen, self.player, self.origin, (300, 400), weapon_type=WeaponRegister.SWORD),
+            Atachment(self.screen, self.player, self.origin, (500, 300), weapon_type=WeaponRegister.HEALING),
+        ]
 
         self.player_hud = PlayerHUD(self.screen, self.player)
 
