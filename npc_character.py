@@ -63,6 +63,25 @@ class NPCCharacter:
         self.max_HP: int = self.character[NPCRegister.HP]
         self.HP: int = self.max_HP
 
+    def change_health(self, amount: int, reduce: bool = True):
+        """Reduces the NPC's HP and handles death."""
+        if reduce:
+            self.HP -= amount
+            cprint(f"{self.character[NPCRegister.NAME]} took {amount} damage. Remaining HP: {self.HP}", VC.YELLOW)
+
+            if self.HP <= 0:
+                self.HP = 0
+                self.change_animation(NPCRegister.DEAD)
+                self.target_pos = self.pos
+                cprint(f"{self.character[NPCRegister.NAME]} has died!", VC.RED)
+        else:
+            self.HP += amount
+            print(f"{self.character[NPCRegister.NAME]} heald {amount}. HP: {self.HP}", VC.YELLOW)
+
+            if self.HP >= self.max_HP:
+                self.HP = self.max_HP
+                self.change_animation(NPCRegister.IDLE)
+
     # ──────────────────────────────────────────────────────────────
     # Animation Handling
     # ──────────────────────────────────────────────────────────────
@@ -142,6 +161,8 @@ class NPCCharacter:
         """
         Sets a new movement target based on an offset from current position.
         """
+        if self.animation_state == NPCRegister.DEAD:
+            return
         self.target_pos = self.pos + pygame.Vector2(offset)
         self.change_animation(NPCRegister.RUNNING)
 
@@ -149,6 +170,8 @@ class NPCCharacter:
         """
         Smoothly moves the character toward its target position.
         """
+        if self.animation_state == NPCRegister.DEAD:
+            return
         direction = self.target_pos - self.pos
         distance = direction.length()
 

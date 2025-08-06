@@ -40,8 +40,8 @@ class GunBehavior(WeaponBehavior):
         spawn2 = base_pos + direction2 * offset_distance
 
         inherited_velocity = self.weapon.pos - self.weapon.previous_pos
-        projectiles.append(Projectile(spawn1, direction1, inherited_velocity))
-        projectiles.append(Projectile(spawn2, direction2, inherited_velocity))
+        projectiles.append(Projectile(spawn1, direction1, self.weapon.weapon_type[WeaponRegister.DAMAGE], inherited_velocity))
+        projectiles.append(Projectile(spawn2, direction2, self.weapon.weapon_type[WeaponRegister.DAMAGE], inherited_velocity))
 
 
 class SwordBehavior(WeaponBehavior):
@@ -64,10 +64,11 @@ class WeaponRegister:
     """Weapon type metadata (name and cooldown)."""
     NAME = 0
     COOLDOWN = 1
+    DAMAGE = 2
 
-    GUN = ("Gun", 100)
-    SWORD = ("Sword", 10)
-    HEALING = ("Healing", 200)
+    GUN = ("Gun", 100, 1)
+    SWORD = ("Sword", 10, 1)
+    HEALING = ("Healing", 200, 0)
 
 
 # -------------------------------
@@ -94,11 +95,11 @@ class Attachment:
         self.dragging = False
         self.drag_offset = pygame.Vector2(0, 0)
 
-        self.weapon_name = weapon_type[WeaponRegister.NAME]
+        self.weapon_type = weapon_type
         self.cooldown = 0
         self.cooldown_time = weapon_type[WeaponRegister.COOLDOWN]
 
-        self.texture = self.load_texture(self.weapon_name)
+        self.texture = self.load_texture(self.weapon_type[WeaponRegister.NAME])
 
         # Assign behavior based on weapon type
         if weapon_type == WeaponRegister.GUN:
@@ -210,9 +211,9 @@ class Projectile:
         self,
         pos: pygame.Vector2,
         direction: pygame.Vector2,
+        damage: int,
         inherited_velocity: pygame.Vector2 = pygame.Vector2(0, 0),
         speed: float = 15,
-        damage: int = 10
     ):
         self.pos = pygame.Vector2(pos)
         self.velocity = direction.normalize() * speed + inherited_velocity
