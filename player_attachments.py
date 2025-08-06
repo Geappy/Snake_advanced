@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import pygame
 from typing import Optional, TYPE_CHECKING
 
@@ -29,9 +30,9 @@ class GunBehavior(WeaponBehavior):
     """Gun weapon shoots two projectiles in opposite directions."""
     def attack(self, projectiles: list):
         base_pos = pygame.Vector2(self.weapon.pos)
-        angle = getattr(self.weapon, "last_angle", 0)
+        angle = self.weapon.last_angle
 
-        # Directions offset by ±90 degrees from weapon's angle
+        # Directions
         direction1 = pygame.Vector2(1, 0).rotate(-angle - 90).normalize()
         direction2 = pygame.Vector2(1, 0).rotate(-angle + 90).normalize()
 
@@ -39,9 +40,23 @@ class GunBehavior(WeaponBehavior):
         spawn1 = base_pos + direction1 * offset_distance
         spawn2 = base_pos + direction2 * offset_distance
 
-        inherited_velocity = self.weapon.pos - self.weapon.previous_pos
-        projectiles.append(Projectile(spawn1, direction1, self.weapon.weapon_type[WeaponRegister.DAMAGE], inherited_velocity))
-        projectiles.append(Projectile(spawn2, direction2, self.weapon.weapon_type[WeaponRegister.DAMAGE], inherited_velocity))
+        # Linear velocity
+        linear_velocity = self.weapon.pos - self.weapon.previous_pos
+
+        # Angular velocity (degrees per frame to radians)
+        d_angle = self.weapon.last_angle - self.weapon.previous_angle
+        d_angle_rad = -math.radians(d_angle)
+
+        # Tangential velocities
+        tangential1 = pygame.Vector2(-direction1.y, direction1.x) * offset_distance * d_angle_rad
+        tangential2 = pygame.Vector2(-direction2.y, direction2.x) * offset_distance * d_angle_rad
+
+        velocity1 = linear_velocity + tangential1
+        velocity2 = linear_velocity + tangential2
+
+        projectiles.append(Projectile(spawn1, direction1, self.weapon.weapon_type[WeaponRegister.DAMAGE], velocity1))
+        projectiles.append(Projectile(spawn2, direction2, self.weapon.weapon_type[WeaponRegister.DAMAGE], velocity2))
+
 
 
 class SwordBehavior(WeaponBehavior):
@@ -88,6 +103,7 @@ class Attachment:
         self.size = 50
         self.pickup_range = self.size * 2
         self.last_angle = 0
+        self.previous_angle = self.last_angle 
 
         self.attached = False
         self.attached_to: Optional[int] = None
@@ -194,6 +210,7 @@ class Attachment:
         self.origin = origin
         if self.attached:
             self.previous_pos = self.pos
+            self.previous_angle = getattr(self, "last_angle", 0)
             self.pos = self.player.snake_pos[self.attached_to]
         elif self.dragging:
             mouse_screen = pygame.Vector2(pygame.mouse.get_pos())
