@@ -12,14 +12,33 @@ if TYPE_CHECKING:
     from player_character import Player
 
 
+class WeaponBehavior:
+    def attack(self):
+        raise NotImplementedError
+
+class GunBehavior(WeaponBehavior):
+    def attack(self):
+        print("Bang!")
+
+class SwordBehavior(WeaponBehavior):
+    def attack(self):
+        print("Slash!")
+
+class HealingBehavior(WeaponBehavior):
+    def attack(self):
+        print("Heal +20!")
+
 class WeaponRegister:
     # Weapon types (must match texture file prefixes)
-    GUN = "Gun"
-    SWORD = "Sword"
-    HEALING = "Healing"
+    NAME = 0
+    COOLDOWN = 1
+
+    GUN = ("Gun", 100)
+    SWORD = ("Sword", 10)
+    HEALING = ("Healing", 200)
 
 class Weapons:
-    def __init__(self, screen, origin: tuple[float, float], pos: tuple[float, float], weapon_type: str):
+    def __init__(self, screen, origin: tuple[float, float], pos: tuple[float, float], weapon_type: tuple[str, int]):
         self.screen: pygame.Surface = screen
         self.origin = origin
         self.pos = pygame.Vector2(pos)
@@ -28,11 +47,33 @@ class Weapons:
         self.size = 50
         self.pickup_range = self.size * 2
 
-        self.weapon_type = weapon_type
-        self.texture = self.load_texture(weapon_type)
+        self.weapon_name = weapon_type[WeaponRegister.NAME]
+        self.texture = self.load_texture(self.weapon_name)
 
         self.dragging = False
         self.drag_offset = pygame.Vector2(0, 0)
+
+        self.cooldown: int = 0
+        self.cooldown_time: int = weapon_type[WeaponRegister.COOLDOWN]
+
+        if weapon_type == WeaponRegister.GUN:
+            self.behavior = GunBehavior()
+        elif weapon_type == WeaponRegister.SWORD:
+            self.behavior = SwordBehavior()
+        elif weapon_type == WeaponRegister.HEALING:
+            self.behavior = HealingBehavior()
+        else:
+            raise ValueError(f"Unknown weapon type: {weapon_type}")
+
+    def attack(self):
+        if self.cooldown > 0:
+            self.cooldown -= 1
+            return
+        try:
+            self.behavior.attack()
+        except:
+            print("No behavior assigned to this weapon.")
+        self.cooldown = self.cooldown_time
 
     def load_texture(self, weapon_type: str) -> pygame.Surface:
         path = f"textures/player/atachments/{weapon_type}_atachment.png"

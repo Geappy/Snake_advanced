@@ -157,6 +157,10 @@ class MainGameOBJ():
         # Flip display
         pygame.display.flip()
 
+    def attack(self) -> None:
+        for weapon in self.ground_weapons:
+            weapon.attack()
+
     def kill_game(self) -> None:
         """ends the game"""
         pygame.quit()
@@ -170,6 +174,7 @@ def main() -> None:
     counter: int = 0
     while True:
         game.handle_input()
+        game.attack()
         game.render()
         clock.tick(60)
         counter += 1
