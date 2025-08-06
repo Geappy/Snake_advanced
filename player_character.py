@@ -1,5 +1,6 @@
 """Structure of Player characters with movement and visual rendering."""
 
+import math
 import pygame
 from typing import Optional
 
@@ -57,6 +58,13 @@ class Player:
         self.radius_pupil = self.radius_eye * 0.5
         self.eye_distance = self.girthness * 0.3
 
+        # wave animation
+        self.prev_snake_pos = self.snake_pos.copy()
+        self.segment_speeds = [0.0 for _ in self.snake_pos]
+        self.time = 0.0
+        self.wave_freq = 1
+        self.wave_amplitude = 0.5
+
     # ──────────────────────────────────────────────────────────────
     # Input & State Update
     # ──────────────────────────────────────────────────────────────
@@ -91,20 +99,63 @@ class Player:
     def update_body_positions(self) -> None:
         """
         Updates positions of body segments to follow the segment before them.
+        Also applies a sine-based wave effect based on segment movement speed.
         """
         self.calc_move_pos()
-        for i in range(1, len(self.snake_pos)):
-            current = self.snake_pos[i]
-            prev = self.snake_pos[i - 1]
 
-            delta = pygame.Vector2(current) - pygame.Vector2(prev)
+        # Move each segment to follow the previous one
+        for i in range(1, len(self.snake_pos)):
+            current = pygame.Vector2(self.snake_pos[i])
+            prev = pygame.Vector2(self.snake_pos[i - 1])
+
+            delta = current - prev
             distance = delta.length()
 
             if distance > self.segment_length:
                 delta.scale_to_length(self.segment_length)
-                new_pos = pygame.Vector2(prev) + delta
+                new_pos = prev + delta
                 self.snake_pos[i] = new_pos.xy
+
+        # Ensure lists match length
+        if len(self.prev_snake_pos) != len(self.snake_pos):
+            self.prev_snake_pos = self.snake_pos.copy()
+            self.segment_speeds = [0.0 for _ in self.snake_pos]
+
+        # Calculate speed (distance moved) for each segment
+        for i in range(len(self.snake_pos)):
+            current = pygame.Vector2(self.snake_pos[i])
+            prev = pygame.Vector2(self.prev_snake_pos[i])
+            self.segment_speeds[i] = (current - prev).length()
+
+        # Store current positions for next frame
+        self.prev_snake_pos = self.snake_pos.copy()
+
+        # Update internal animation time
+        self.time += 0.1
+
+        # Apply sine wave to segments (starting after head and neck)
+        for i in range(2, len(self.snake_pos)):
+            prev = pygame.Vector2(self.snake_pos[i - 1])
+            current = pygame.Vector2(self.snake_pos[i])
+            direction = current - prev
+
+            if direction.length_squared() == 0:
+                continue
+
+            dir_norm = direction.normalize()
+            perp = pygame.Vector2(-dir_norm.y, dir_norm.x)
+
+            speed_factor = min(self.segment_speeds[i] / 5.0, 1.0)  # Normalize speed
+
+            # Sine wave offset based on segment index and time
+            phase = self.time - i * self.wave_freq
+            wave_offset = perp * (math.sin(phase) * self.wave_amplitude * speed_factor)
+
+            self.snake_pos[i] = (current + wave_offset).xy
+
+        # Update weapon positions
         self.update_weapons()
+
 
     # ──────────────────────────────────────────────────────────────
     # Snake Structure

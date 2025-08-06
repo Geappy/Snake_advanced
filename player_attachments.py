@@ -25,7 +25,7 @@ class Weapons:
         self.pos = pygame.Vector2(pos)
         self.attached = False
         self.attached_to: Optional[int] = None
-        self.size = 45
+        self.size = 50
         self.pickup_range = self.size * 2
 
         self.weapon_type = weapon_type
@@ -103,7 +103,9 @@ class Weapons:
         screen_pos = self.pos + pygame.Vector2(origin)
 
         # Try different correction angles here
-        corrected_angle = angle + 90
+        corrected_angle = angle
+        if self.attached:
+            corrected_angle += 90
 
         rotated_image = pygame.transform.rotate(self.texture, corrected_angle)
         rect = rotated_image.get_rect(center=screen_pos)
