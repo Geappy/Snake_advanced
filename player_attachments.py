@@ -121,6 +121,8 @@ class WeaponRegister:
     SWORD = ("Sword", 10, 1)
     HEALING = ("Healing", 200, 1)
 
+    ATTACHED = "atachment"
+    DETACHED = "card"
 
 # -------------------------------
 # Attachment Class
@@ -151,7 +153,8 @@ class Attachment:
         self.cooldown = 0
         self.cooldown_time = weapon_type[WeaponRegister.COOLDOWN]
 
-        self.texture = self.load_texture(self.weapon_type[WeaponRegister.NAME])
+        self.texture_detached = self.load_texture(self.weapon_type[WeaponRegister.NAME], WeaponRegister.DETACHED)
+        self.texture_attached = self.load_texture(self.weapon_type[WeaponRegister.NAME], WeaponRegister.ATTACHED)
 
         # Assign behavior based on weapon type
         if weapon_type == WeaponRegister.GUN:
@@ -176,9 +179,9 @@ class Attachment:
 
         self.cooldown = self.cooldown_time
 
-    def load_texture(self, weapon_type: str) -> pygame.Surface:
+    def load_texture(self, weapon_type: str, state: str) -> pygame.Surface:
         """Load and scale weapon texture based on type."""
-        path = f"textures/player/atachments/{weapon_type}_atachment.png"
+        path = f"textures/player/atachments/{weapon_type}_{state}.png"
         try:
             image = pygame.image.load(path).convert_alpha()
             target_height = self.size * 2
@@ -237,7 +240,10 @@ class Attachment:
         self.last_angle = angle
 
         corrected_angle = angle + 90 if self.attached else angle
-        rotated_image = pygame.transform.rotate(self.texture, corrected_angle)
+        if self.attached:
+            rotated_image = pygame.transform.rotate(self.texture_attached, corrected_angle)
+        else:
+            rotated_image = pygame.transform.rotate(self.texture_detached, corrected_angle)
         rect = rotated_image.get_rect(center=screen_pos)
         self.screen.blit(rotated_image, rect)
 
