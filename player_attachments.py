@@ -148,7 +148,7 @@ class Attachment:
             if self.attached:
                 self.attached = False
                 if self.attached_to is not None and player.weapon_slots.get(self.attached_to) == self:
-                    player.weapon_slots[self.attached_to] = None
+                    del player.weapon_slots[self.attached_to]
                 self.attached_to = None
 
     def handle_mouse_up(self, player: Player, origin: tuple[float, float]):

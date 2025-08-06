@@ -231,7 +231,9 @@ class Player:
                     min_distance = dist
                     closest_idx = idx
 
-        for idx in range(self.weapon_start_index, len(self.snake_pos)-1, self.weapon_interval):
+        for idx in range(self.weapon_start_index, len(self.snake_pos)-2, self.weapon_interval):
+            if idx in self.weapon_slots:
+                continue
             segment_pos = pygame.Vector2(self.snake_pos[idx])
             screen_pos = pygame.Vector2(self.origin) + segment_pos
 
