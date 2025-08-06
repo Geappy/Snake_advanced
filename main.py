@@ -31,9 +31,9 @@ class MainGameOBJ():
 
         self.dragging_weapon: Optional[Weapons] = None
         self.ground_weapons = [
-            Weapons(self.origin, (100, 200), weapon_type=WeaponRegister.GUN),
-            Weapons(self.origin, (300, 400), weapon_type=WeaponRegister.SWORD),
-            Weapons(self.origin, (500, 300), weapon_type=WeaponRegister.HEALING),
+            Weapons(self.screen, self.origin, (100, 200), weapon_type=WeaponRegister.GUN),
+            Weapons(self.screen, self.origin, (300, 400), weapon_type=WeaponRegister.SWORD),
+            Weapons(self.screen, self.origin, (500, 300), weapon_type=WeaponRegister.HEALING),
         ]
 
         # setup all the characters
@@ -88,6 +88,24 @@ class MainGameOBJ():
                     # set target to zero
                     self.player.target_pos = self.player.snake_pos[0]
 
+    def render_wepons(self):
+        for weapon in self.ground_weapons:
+            if weapon.attached:
+                continue  # Skip drawing, player handles it
+
+            # Update position for rendering
+            weapon.update(self.origin)
+
+            # Optionally rotate dragging weapon toward mouse
+            angle = 0
+            if weapon.dragging:
+                mouse_world = pygame.Vector2(pygame.mouse.get_pos()) - pygame.Vector2(self.origin)
+                direction = mouse_world - weapon.pos
+                if direction.length_squared() > 0:
+                    angle = direction.angle_to(pygame.Vector2(1, 0))
+
+            weapon.draw(self.origin, angle=angle)
+
     def render(self) -> None:
         """Render all important game objects each frame."""
         
@@ -120,10 +138,7 @@ class MainGameOBJ():
             self.player.draw_attachment_nodes(self.dragging_weapon)
 
         # Update and draw all weapons
-        for weapon in self.ground_weapons:
-            if weapon.dragging or not weapon.attached:
-                weapon.update(self.origin)
-            weapon.draw(self.screen, self.origin)
+        self.render_wepons()
 
         # Render NPCs
         for npc in self.npc_characters.values():

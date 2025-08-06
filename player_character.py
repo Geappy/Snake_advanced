@@ -45,7 +45,7 @@ class Player:
 
         # Atachments
         self.weapon_start_index = 2
-        self.weapon_interval = 3
+        self.weapon_interval = 2
         self.weapon_slots: dict[int, Optional[Weapons]] = {}
 
         # Cached values
@@ -248,6 +248,21 @@ class Player:
         """
         self.origin = origin
         self.draw()
-        for weapon in self.weapon_slots.values():
+        for idx, weapon in self.weapon_slots.items():
             if weapon:
-                weapon.draw(self.screen, self.origin)
+                if 0 < idx < len(self.snake_pos) - 1:
+                    prev = pygame.Vector2(self.snake_pos[idx - 1])
+                    next_ = pygame.Vector2(self.snake_pos[idx + 1])
+                    direction = next_ - prev
+                    angle = direction.angle_to(pygame.Vector2(1, 0))
+                elif idx > 0:
+                    # Fallback: use previous segment if at end
+                    current = pygame.Vector2(self.snake_pos[idx])
+                    prev = pygame.Vector2(self.snake_pos[idx - 1])
+                    direction = current - prev
+                    angle = direction.angle_to(pygame.Vector2(1, 0))
+                else:
+                    angle = 0  # Segment 0 fallback
+
+                weapon.draw(self.origin, angle)
+

@@ -19,7 +19,8 @@ class WeaponRegister:
     HEALING = "Healing"
 
 class Weapons:
-    def __init__(self, origin: tuple[float, float], pos: tuple[float, float], weapon_type: str):
+    def __init__(self, screen, origin: tuple[float, float], pos: tuple[float, float], weapon_type: str):
+        self.screen: pygame.Surface = screen
         self.origin = origin
         self.pos = pygame.Vector2(pos)
         self.attached = False
@@ -96,21 +97,17 @@ class Weapons:
                 self.pos = node_pos
                 cprint(f"Weapon snapped to node {idx}", VC.GREEN)
                 return
-
         cprint("Dropped weapon without snapping to a node", VC.YELLOW)
 
-    def draw(self, screen: pygame.Surface, origin: tuple[float, float]):
+    def draw(self, origin: tuple[float, float], angle: float = 0):
         screen_pos = self.pos + pygame.Vector2(origin)
 
-        # Draw texture centered on position
-        rect = self.texture.get_rect(center=screen_pos)
-        screen.blit(self.texture, rect)
+        # Try different correction angles here
+        corrected_angle = angle + 90
 
-        # Optional outline for dragging
-        if self.dragging:
-            pygame.draw.circle(screen, (255, 0, 0), screen_pos, self.size + 5, 2)
-
-
+        rotated_image = pygame.transform.rotate(self.texture, corrected_angle)
+        rect = rotated_image.get_rect(center=screen_pos)
+        self.screen.blit(rotated_image, rect)
 
     def update(self, origin: tuple[float, float]):
         self.origin = origin
@@ -119,7 +116,3 @@ class Weapons:
             mouse_screen = pygame.Vector2(pygame.mouse.get_pos())
             mouse_world = mouse_screen - pygame.Vector2(self.origin)
             self.pos = mouse_world + self.drag_offset
-
-
-
-
