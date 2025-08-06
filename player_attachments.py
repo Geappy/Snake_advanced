@@ -11,18 +11,48 @@ from assistent_skripts.color_print import ValidColors as VC
 if TYPE_CHECKING:
     from player_character import Player
 
-class Weapon:
-    def __init__(self, origin: tuple[float, float], pos: tuple[float, float]):
+
+class WeaponRegister:
+    # Weapon types (must match texture file prefixes)
+    GUN = "Gun"
+    SWORD = "Sword"
+    HEALING = "Healing"
+
+class Weapons:
+    def __init__(self, origin: tuple[float, float], pos: tuple[float, float], weapon_type: str):
         self.origin = origin
         self.pos = pygame.Vector2(pos)
         self.attached = False
         self.attached_to: Optional[int] = None
-        self.size = 15
+        self.size = 45
         self.pickup_range = self.size * 2
+
+        self.weapon_type = weapon_type
+        self.texture = self.load_texture(weapon_type)
 
         self.dragging = False
         self.drag_offset = pygame.Vector2(0, 0)
-                
+
+    def load_texture(self, weapon_type: str) -> pygame.Surface:
+        path = f"textures/player/atachments/{weapon_type}_atachment.png"
+        try:
+            image = pygame.image.load(path).convert_alpha()
+
+            # Target height (e.g., match weapon size)
+            target_height = self.size * 2
+            original_width, original_height = image.get_size()
+
+            # Calculate new width while keeping aspect ratio
+            aspect_ratio = original_width / original_height
+            target_width = int(target_height * aspect_ratio)
+
+            scaled_image = pygame.transform.scale(image, (target_width, int(target_height)))
+            return scaled_image
+
+        except Exception as e:
+            cprint(f"[ERROR] Failed to load texture: {path}", VC.RED)
+            raise e
+
     def handle_mouse_down(self, mouse_pos: tuple[float, float], origin: tuple[float, float], player: Player):
         self.origin = origin
         mouse_world = pygame.Vector2(mouse_pos) - pygame.Vector2(self.origin)
@@ -70,14 +100,16 @@ class Weapon:
         cprint("Dropped weapon without snapping to a node", VC.YELLOW)
 
     def draw(self, screen: pygame.Surface, origin: tuple[float, float]):
-        self.origin = origin
-        screen_pos = self.pos + pygame.Vector2(self.origin)
+        screen_pos = self.pos + pygame.Vector2(origin)
 
+        # Draw texture centered on position
+        rect = self.texture.get_rect(center=screen_pos)
+        screen.blit(self.texture, rect)
+
+        # Optional outline for dragging
         if self.dragging:
             pygame.draw.circle(screen, (255, 0, 0), screen_pos, self.size + 5, 2)
 
-        color = (255, 0, 255) if self.attached else (0, 0, 255)
-        pygame.draw.circle(screen, color, screen_pos, self.size)
 
 
     def update(self, origin: tuple[float, float]):

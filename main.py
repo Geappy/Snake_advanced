@@ -10,7 +10,7 @@ from assistent_skripts.color_print import ValidColors as VC
 from player_character import Player
 from npc_character import NPCCharacter, NPCRegister, NamedNPCs
 from hub import HUB
-from player_attachments import Weapon
+from player_attachments import Weapons, WeaponRegister
 
 
 class MainGameOBJ():
@@ -29,10 +29,11 @@ class MainGameOBJ():
 
         self.move: bool = False
 
-        self.dragging_weapon: Optional[Weapon] = None
+        self.dragging_weapon: Optional[Weapons] = None
         self.ground_weapons = [
-            Weapon(self.origin, (100, 200)),
-            Weapon(self.origin, (300, 400)),
+            Weapons(self.origin, (100, 200), weapon_type=WeaponRegister.GUN),
+            Weapons(self.origin, (300, 400), weapon_type=WeaponRegister.SWORD),
+            Weapons(self.origin, (500, 300), weapon_type=WeaponRegister.HEALING),
         ]
 
         # setup all the characters

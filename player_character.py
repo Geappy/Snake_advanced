@@ -6,7 +6,7 @@ from typing import Optional
 from assistent_skripts.color_print import custom_print as cprint
 from assistent_skripts.color_print import ValidColors as VC
 
-from player_attachments import Weapon
+from player_attachments import Weapons
 
 # === Color Constants ===
 GREEN = (0, 255, 0)
@@ -44,9 +44,9 @@ class Player:
         ]
 
         # Atachments
-        self.weapon_start_index = 1
+        self.weapon_start_index = 2
         self.weapon_interval = 3
-        self.weapon_slots: dict[int, Optional[Weapon]] = {}
+        self.weapon_slots: dict[int, Optional[Weapons]] = {}
 
         # Cached values
         self.radius_outer = self.girthness / 2
@@ -172,7 +172,7 @@ class Player:
         pygame.draw.circle(self.screen, BLACK, left_eye_pos + pupil_offset, self.radius_pupil)
         pygame.draw.circle(self.screen, BLACK, right_eye_pos + pupil_offset, self.radius_pupil)
 
-    def draw_attachment_nodes(self, dragging_weapon: Optional[Weapon] = None) -> None:
+    def draw_attachment_nodes(self, dragging_weapon: Optional[Weapons] = None) -> None:
         """
         Draws visual markers for possible weapon attachment nodes.
         Highlights the closest one if dragging a weapon.
