@@ -68,10 +68,10 @@ class MainGameOBJ():
                     self.dragging_weapon = None  # Reset
 
                     for weapon in self.ground_weapons:
-                        weapon.handle_mouse_down(pygame.mouse.get_pos(), self.origin)
+                        weapon.handle_mouse_down(pygame.mouse.get_pos(), self.origin, self.player)
                         if weapon.dragging:
                             self.dragging_weapon = weapon
-                            break  # Only allow one to be dragged
+                            break
 
                 elif event.button == 3: # right click
                     self.move = True

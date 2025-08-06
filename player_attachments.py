@@ -23,15 +23,21 @@ class Weapon:
         self.dragging = False
         self.drag_offset = pygame.Vector2(0, 0)
                 
-    def handle_mouse_down(self, mouse_pos: tuple[float, float], origin: tuple[float, float]):
+    def handle_mouse_down(self, mouse_pos: tuple[float, float], origin: tuple[float, float], player: Player):
         self.origin = origin
-        if self.attached:
-            return  # prevent dragging attached weapons (or make detachable if you want)
-
         mouse_world = pygame.Vector2(mouse_pos) - pygame.Vector2(self.origin)
+
+        # Check if mouse clicked within the weapon hit circle
         if (self.pos - mouse_world).length() <= self.size:
             self.dragging = True
             self.drag_offset = self.pos - mouse_world
+
+            # Detach from player if currently attached
+            if self.attached:
+                self.attached = False
+                if self.attached_to is not None and player.weapon_slots.get(self.attached_to) == self:
+                    player.weapon_slots[self.attached_to] = None
+                self.attached_to = None
 
     def handle_mouse_up(self, player: Player, origin: tuple[float, float]):
         self.origin = origin
