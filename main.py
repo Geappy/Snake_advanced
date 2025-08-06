@@ -65,11 +65,13 @@ class MainGameOBJ():
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: # left click
+                    self.dragging_weapon = None  # Reset
+
                     for weapon in self.ground_weapons:
                         weapon.handle_mouse_down(pygame.mouse.get_pos(), self.origin)
                         if weapon.dragging:
                             self.dragging_weapon = weapon
-                            cprint(f"Started dragging weapon at {weapon.pos}", VC.YELLOW)
+                            break  # Only allow one to be dragged
 
                 elif event.button == 3: # right click
                     self.move = True
