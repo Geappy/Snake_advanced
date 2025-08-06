@@ -327,4 +327,3 @@ class SwordSwingProjectile:
         self.origin = origin
         # world_pos = self.pos + pygame.Vector2(self.origin)
         # pygame.draw.circle(self.screen, (255, 255, 100), world_pos, self.range_radius, 2)
-

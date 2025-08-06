@@ -183,7 +183,7 @@ class Game:
 
     def _render_weapons(self) -> None:
         """Update and render unattached weapons and projectiles."""
-        for weapon in self.ground_weapons:
+        for weapon in reversed(self.ground_weapons):
             if weapon.attached:
                 continue
 

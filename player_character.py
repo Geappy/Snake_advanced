@@ -368,4 +368,3 @@ class Player:
 
                 weapon.update(self.origin)
                 weapon.draw(self.origin, angle)
-
