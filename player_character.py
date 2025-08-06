@@ -46,7 +46,7 @@ class Player:
 
         # Atachments
         self.weapon_start_index = 2
-        self.weapon_interval = 2
+        self.weapon_interval = 3
         self.weapon_slots: dict[int, Optional[Weapons]] = {}
 
         # Cached values
@@ -250,9 +250,6 @@ class Player:
             else:
                 # Normal available node in cyan
                 pygame.draw.circle(self.screen, (0, 255, 255), screen_pos, 5)
-        print(f"Weapon world pos: {dragging_weapon.pos}")
-        print(f"Segment world pos: {segment_pos}")
-        print(f"Distance: {(segment_pos - dragging_weapon.pos).length()}")
 
     # ──────────────────────────────────────────────────────────────
     # Drawing & Rendering

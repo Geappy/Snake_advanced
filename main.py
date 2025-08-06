@@ -11,6 +11,7 @@ from player_character import Player
 from npc_character import NPCCharacter, NPCRegister, NamedNPCs
 from hub import HUB
 from player_attachments import Weapons, WeaponRegister
+from player_hud import PlayerHUD, HUDRegister
 
 
 class MainGameOBJ():
@@ -50,6 +51,8 @@ class MainGameOBJ():
             active=True
         )
 
+        self.player_hud = PlayerHUD(self.screen, self.player)
+
         cprint("character setup sucsessful ", VC.MAGENTA)
 
     def handle_input(self):
@@ -66,13 +69,16 @@ class MainGameOBJ():
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: # left click
-                    self.dragging_weapon = None  # Reset
-
-                    for weapon in self.ground_weapons:
-                        weapon.handle_mouse_down(pygame.mouse.get_pos(), self.origin, self.player)
-                        if weapon.dragging:
-                            self.dragging_weapon = weapon
-                            break
+                    click = self.player_hud.get_clicked()
+                    if click == "":
+                        self.dragging_weapon = None
+                        for weapon in self.ground_weapons:
+                            weapon.handle_mouse_down(pygame.mouse.get_pos(), self.origin, self.player)
+                            if weapon.dragging:
+                                self.dragging_weapon = weapon
+                                break
+                    elif click == HUDRegister.OPTIONS:
+                        cprint("options", VC.MAGENTA)
 
                 elif event.button == 3: # right click
                     self.move = True
@@ -143,6 +149,10 @@ class MainGameOBJ():
         # Render NPCs
         for npc in self.npc_characters.values():
             npc.render(self.origin)
+
+        # render hud
+        self.player_hud.update()
+        self.player_hud.render()
 
         # Flip display
         pygame.display.flip()

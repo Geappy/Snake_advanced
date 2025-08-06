@@ -1,11 +1,12 @@
 - timed levels
 
 - player character
-    - snake with prcidual animation
-    - add wepons onte every x bodeyparts
+    ✓ snake with prcidual animation
+    ✓ add wepons onte every x bodeyparts
+    - only animate player when on screen
 
 - items
-    - wepons of passive modifiers to be added to the snake
+    ✓ wepons of passive modifiers to be added to the snake
     - swort (big damage low range)
     - guns (less damage but infinit range)
     - boost items (healing, speed, armor)
@@ -26,9 +27,9 @@
     - permanent upgrades
 
 - HUD
-    - HP
-    - armor
-    - mana
+    ✓ HP
+    ✓ armor
+    ✓ mana
     - items
     - map
 

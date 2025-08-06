@@ -114,7 +114,6 @@ class Weapons:
     def update(self, origin: tuple[float, float]):
         self.origin = origin
         if self.dragging:
-            print(f"Updating weapon at {self.pos}")
             mouse_screen = pygame.Vector2(pygame.mouse.get_pos())
             mouse_world = mouse_screen - pygame.Vector2(self.origin)
             self.pos = mouse_world + self.drag_offset
