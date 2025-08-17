@@ -5,7 +5,7 @@ import pygame
 from assistent_skripts.color_print import custom_print as cprint
 from assistent_skripts.color_print import ValidColors as VC
 
-from player_character import Player
+from player.player_character import Player
 
 
 class HUDRegister():

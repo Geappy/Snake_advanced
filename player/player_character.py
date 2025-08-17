@@ -7,7 +7,7 @@ from typing import Optional
 from assistent_skripts.color_print import custom_print as cprint
 from assistent_skripts.color_print import ValidColors as VC
 
-from player_attachments import Attachment
+from player.player_attachments import Attachment
 
 # === Color Constants ===
 GREEN = (0, 255, 0)

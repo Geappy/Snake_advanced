@@ -8,11 +8,16 @@ from typing import Optional
 from assistent_skripts.color_print import custom_print as cprint
 from assistent_skripts.color_print import ValidColors as VC
 
-from player_character import Player
-from npc_character import NPCCharacter, NPCRegister, NamedNPCs
-from hub import HUB
-from player_attachments import Attachment, WeaponRegister, Projectile, SwordSwingProjectile
-from player_hud import PlayerHUD, HUDRegister
+# player import
+from player.player_character import Player
+from player.player_attachments import Attachment, WeaponRegister, Projectile, SwordSwingProjectile
+from player.player_hud import PlayerHUD, HUDRegister
+
+# characters
+from characters.npc_character import NPCCharacter, NPCRegister, NamedNPCs
+
+# rooms stages backgrounds import
+from rooms.hub import HUB
 
 
 class Game:
