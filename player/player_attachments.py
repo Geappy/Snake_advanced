@@ -6,8 +6,7 @@ import math
 import pygame
 from typing import Optional, TYPE_CHECKING
 
-from assistent_skripts.color_print import custom_print as cprint
-from assistent_skripts.color_print import ValidColors as VC
+from assistent_skripts.color_print import custom_print as cprint, ValidColors as VC
 
 if TYPE_CHECKING:
     from player_character import Player

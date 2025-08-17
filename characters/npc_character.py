@@ -3,8 +3,7 @@
 import os
 import pygame
 
-from assistent_skripts.color_print import custom_print as cprint
-from assistent_skripts.color_print import ValidColors as VC
+from assistent_skripts.color_print import custom_print as cprint, ValidColors as VC
 
 
 class NamedNPCs:

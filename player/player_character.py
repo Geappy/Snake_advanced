@@ -4,10 +4,11 @@ import math
 import pygame
 from typing import Optional
 
-from assistent_skripts.color_print import custom_print as cprint
-from assistent_skripts.color_print import ValidColors as VC
+from assistent_skripts.color_print import custom_print as cprint, ValidColors as VC
 
 from player.player_attachments import Attachment
+
+from rooms.walls import Wall
 
 # === Color Constants ===
 GREEN = (0, 255, 0)
@@ -36,7 +37,7 @@ class Player:
         self.max_speed = 8
         self.acceleration = 1
         self.deceleration = 1
-        self.move_speed = 15
+        self.move_speed = 10
         self.target_pos = spawn
 
         # Geometry
@@ -80,27 +81,67 @@ class Player:
         mouse_pos = pygame.mouse.get_pos()
         self.target_pos = (mouse_pos[0] - self.origin[0], mouse_pos[1] - self.origin[1])
 
-    def calc_move_pos(self) -> None:
-        """
-        Moves the snake head toward the target position using capped movement speed.
-        """
+    def calc_move_pos(self, walls: list[Wall]) -> None:
         head = pygame.Vector2(self.snake_pos[0])
         target = pygame.Vector2(self.target_pos)
         direction = target - head
-        distance = direction.length()
 
-        if distance < self.move_speed:
-            self.snake_pos[0] = self.target_pos
-        else:
+        if direction.length() > self.move_speed:
             direction.scale_to_length(self.move_speed)
-            self.snake_pos[0] = (head + direction).xy
 
-    def update_body_positions(self) -> None:
+        attempted_pos = head + direction
+
+        def collides(pos):
+            return any(self.circle_rect_collision(pos, self.radius_head_outer, wall.rect) for wall in walls)
+
+        if not collides(attempted_pos):
+            self.snake_pos[0] = attempted_pos
+            return
+
+        # Try sliding along X only
+        slide_x = pygame.Vector2(head.x + direction.x, head.y)
+        if not collides(slide_x):
+            self.snake_pos[0] = slide_x
+            return
+
+        # Try sliding along Y only
+        slide_y = pygame.Vector2(head.x, head.y + direction.y)
+        if not collides(slide_y):
+            self.snake_pos[0] = slide_y
+            return
+
+        # All paths blocked — don't move
+
+    def circle_rect_collision(self, circle_pos: pygame.Vector2, radius: float, rect: pygame.Rect) -> bool:
+        # Find the closest point on the rect to the circle center
+        closest_x = max(rect.left, min(circle_pos.x, rect.right))
+        closest_y = max(rect.top, min(circle_pos.y, rect.bottom))
+
+        # Calculate distance from closest point to circle center
+        distance_x = circle_pos.x - closest_x
+        distance_y = circle_pos.y - closest_y
+
+        # If distance is less than radius, they are colliding
+        return (distance_x**2 + distance_y**2) < (radius**2)
+
+    def repel_from_walls(self, pos: pygame.Vector2, walls: list[Wall], strength: float) -> pygame.Vector2:
+        repel_vector = pygame.Vector2(0, 0)
+        for wall in walls:
+            if wall.rect.collidepoint(pos):
+                # Push outwards from wall center
+                wall_center = pygame.Vector2(wall.rect.center)
+                away = (pos - wall_center)
+                if away.length_squared() > 0:
+                    away.normalize_ip()
+                    repel_vector += away * strength
+        return repel_vector
+
+    def update_body_positions(self, walls: list[Wall]) -> None:
         """
         Updates positions of body segments to follow the segment before them.
         Also applies a sine-based wave effect based on segment movement speed.
         """
-        self.calc_move_pos()
+        self.calc_move_pos(walls)
 
         screen_rect = self.screen.get_rect().inflate(self.radius_head_outer, self.radius_head_outer)
 
@@ -158,7 +199,13 @@ class Player:
             phase = self.time - i * self.wave_freq
             wave_offset = perp * (math.sin(phase) * self.wave_amplitude * speed_factor)
 
-            self.snake_pos[i] = (current + wave_offset).xy
+            # Inside your body-follow loop:
+            move_vec = (current + wave_offset).xy - current
+            pos = current + move_vec
+
+            # Apply repelling force if too close
+            repel = self.repel_from_walls(pos, walls, 10)
+            self.snake_pos[i] = (pos + repel).xy
 
     def change_health(self, amount: int, reduce: bool = True):
         """Reduces the NPC's HP and handles death."""

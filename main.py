@@ -5,8 +5,7 @@ import pygame
 import random
 from typing import Optional
 
-from assistent_skripts.color_print import custom_print as cprint
-from assistent_skripts.color_print import ValidColors as VC
+from assistent_skripts.color_print import custom_print as cprint, ValidColors as VC
 
 # player import
 from player.player_character import Player
@@ -17,7 +16,7 @@ from player.player_hud import PlayerHUD, HUDRegister
 from characters.npc_character import NPCCharacter, NPCRegister, NamedNPCs
 
 # rooms stages backgrounds import
-from rooms.hub import HUB
+from rooms.room import HubRoom
 
 
 class Game:
@@ -35,7 +34,7 @@ class Game:
         self.move_enabled = False
 
         # Game Systems
-        self.hub = HUB(self.screen, self.origin, (0, 0))
+        self.hub = HubRoom(self.screen, self.origin, (0, 0))
         self.player = self._init_player()
         self.npc_characters = self._init_npcs()
         self.ground_weapons = self._init_ground_weapons()
@@ -51,7 +50,7 @@ class Game:
     def _init_player(self) -> Player:
         """Create the player and their initial body segments."""
         player = Player(self.screen, self.origin, (0, 0), 10)
-        for _ in range(3):
+        for _ in range(20):
             player.add_snake_part()
         return player
 
@@ -114,7 +113,7 @@ class Game:
         if self.move_enabled:
             self.player.set_target_pos()
 
-        self.player.update_body_positions()
+        self.player.update_body_positions(self.hub.walls)
 
         for weapon in self.ground_weapons:
             weapon.update(self.origin)

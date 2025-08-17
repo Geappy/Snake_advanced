@@ -2,8 +2,7 @@
 
 import pygame
 
-from assistent_skripts.color_print import custom_print as cprint
-from assistent_skripts.color_print import ValidColors as VC
+from assistent_skripts.color_print import custom_print as cprint, ValidColors as VC
 
 from player.player_character import Player
 
@@ -73,17 +72,17 @@ class PlayerHUD():
 
         return ""
     
-    def draw_bar(self, value: int, max_value: int, x: int, y: int, width: int, height: int, fill_color: tuple, border_radius: int):
+    def draw_bar(self, value: int, max_value: int, x: int, y: int, width: int, height: int, fill_color: tuple, outline: int):
         # Outline
-        pygame.draw.rect(self.screen, (0, 0, 0), (x - 1, y - 1, width + 2, height + 2), border_radius)
+        pygame.draw.rect(self.screen, (0, 0, 0), (x - 1, y - 1, width + 2, height + 2), outline)
 
         # Background
-        pygame.draw.rect(self.screen, (40, 40, 40), (x, y, width, height), border_radius)
+        pygame.draw.rect(self.screen, (40, 40, 40), (x, y, width, height), outline)
 
         # Filled section
         fill_width = int((value / max_value) * width)
         if fill_width > 0:
-            pygame.draw.rect(self.screen, fill_color, (x, y, fill_width, height), border_radius)
+            pygame.draw.rect(self.screen, fill_color, (x, y, fill_width, height), outline)
     
     def player(self) -> None:
         # Get player icon rect
